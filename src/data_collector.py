@@ -15,6 +15,9 @@ import yfinance as yf
 import pandas as pd
 from dotenv import load_dotenv
 
+# Load .env FIRST so CORPORATE_PROXY is available before _SESSION is built
+load_dotenv()
+
 # On corporate proxy (CORPORATE_PROXY=true): use a custom requests.Session with
 # SSL verification disabled. On Streamlit Cloud / any standard env: pass session=None
 # so yfinance uses its built-in curl_cffi (TLS fingerprinting) which bypasses
@@ -47,7 +50,6 @@ else:
     # Let yfinance use its internal curl_cffi session (handles bot-detection natively)
     _SESSION = None
 
-load_dotenv()
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
 
 
