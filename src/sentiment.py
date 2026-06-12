@@ -1,11 +1,12 @@
 """
 sentiment.py
 Scores news articles and social posts using VADER sentiment analysis.
-Fetches Reddit posts via public JSON API (no credentials required).
+Fetches Reddit posts via public RSS feed (no credentials required).
 """
 
 import os
 import re
+import xml.etree.ElementTree as ET
 import datetime
 import urllib3
 import requests
@@ -108,7 +109,7 @@ def analyze_yf_news(yf_news: list) -> list[dict]:
 
 
 def get_reddit_posts(ticker: str, company_name: str = "") -> list[dict]:
-    """Fetch Reddit posts using the public JSON API — no credentials required."""
+    """Fetch Reddit posts via RSS feed — works without OAuth on cloud servers."""
     query = f"{ticker} {company_name}".strip()
     verify = False if os.getenv("CORPORATE_PROXY", "false").lower() == "true" else True
     headers = {
@@ -117,42 +118,44 @@ def get_reddit_posts(ticker: str, company_name: str = "") -> list[dict]:
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/125.0.0.0 Safari/537.36"
         ),
-        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept": "application/rss+xml, application/xml, text/xml, */*",
     }
     posts = []
+    NS = "http://www.w3.org/2005/Atom"
 
     for subreddit_name in SUBREDDITS:
         try:
-            url = f"https://www.reddit.com/r/{subreddit_name}/search.json"
+            url = f"https://www.reddit.com/r/{subreddit_name}/search.rss"
             params = {"q": query, "sort": "relevance", "t": "year", "limit": 10}
             r = requests.get(url, headers=headers, params=params,
                              timeout=10, verify=verify)
             if r.status_code != 200:
                 continue
-            children = r.json().get("data", {}).get("children", [])
-            for child in children:
-                d = child.get("data", {})
-                title = d.get("title", "")
+            root = ET.fromstring(r.content)
+            for entry in root.findall(f"{{{NS}}}entry"):
+                title = (entry.findtext(f"{{{NS}}}title") or "").strip()
                 if not title:
                     continue
-                body = d.get("selftext", "")[:200]
-                sentiment = score_text(f"{title} {body}")
-                ts = d.get("created_utc", 0)
-                created = datetime.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d") if ts else ""
+                link_el = entry.find(f"{{{NS}}}link")
+                link = link_el.get("href", "") if link_el is not None else ""
+                content = (entry.findtext(f"{{{NS}}}content") or "")[:200]
+                content = re.sub(r"<[^>]+>", "", content).strip()
+                pub_raw = entry.findtext(f"{{{NS}}}updated") or ""
+                created = pub_raw[:10]
+                sentiment = score_text(f"{title} {content}")
                 posts.append({
                     "subreddit": subreddit_name,
                     "title": title,
-                    "score": d.get("score", 0),
-                    "url": f"https://reddit.com{d.get('permalink', '')}",
+                    "score": 0,
+                    "url": link,
                     "created_utc": created,
-                    "num_comments": d.get("num_comments", 0),
+                    "num_comments": 0,
                     "sentiment_score": sentiment["compound"],
                     "sentiment_label": sentiment["label"],
                 })
         except Exception:
             continue
 
-    posts.sort(key=lambda x: x.get("score", 0), reverse=True)
     return posts[:30]
 
 

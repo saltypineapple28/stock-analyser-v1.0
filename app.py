@@ -95,8 +95,6 @@ This tool collects:
 - **CSV** export
     """)
     st.markdown("---")
-    st.markdown("<small>Configure API keys in `.env`</small>", unsafe_allow_html=True)
-    st.markdown("---")
     st.markdown("""
 <div style='font-size:0.75rem; color:#9E9E9E; line-height:1.8;'>
     <b>Author:</b> @okelaloli<br>
