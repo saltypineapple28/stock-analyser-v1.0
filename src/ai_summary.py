@@ -165,6 +165,4 @@ Based on the combination of technical signals ({signal}), analyst consensus ({co
 - **Suggested Buy Price:** ${buy_p}
 - **Suggested Sell / Target Price:** ${sell_p}
 - **Suggested Cut-Loss Price:** ${cut_p}
-
-*(Note: Add your OpenAI API key in .env to enable GPT-4o-powered analysis with deeper insights.)*
 """
