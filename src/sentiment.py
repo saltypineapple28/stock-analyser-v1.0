@@ -111,7 +111,14 @@ def get_reddit_posts(ticker: str, company_name: str = "") -> list[dict]:
     """Fetch Reddit posts using the public JSON API — no credentials required."""
     query = f"{ticker} {company_name}".strip()
     verify = False if os.getenv("CORPORATE_PROXY", "false").lower() == "true" else True
-    headers = {"User-Agent": "StockAnalyzer/1.0 (public research tool)"}
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+    }
     posts = []
 
     for subreddit_name in SUBREDDITS:

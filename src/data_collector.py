@@ -244,8 +244,18 @@ def get_news_articles(ticker: str, company_name: str) -> list[dict]:
 def get_stocktwits_sentiment(ticker: str) -> dict:
     """Fetch recent StockTwits messages for a ticker (no API key required)."""
     url = f"https://api.stocktwits.com/api/2/streams/symbol/{ticker}.json"
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        )
+    }
     try:
-        response = _SESSION.get(url, timeout=10)
+        if _SESSION is not None:
+            response = _SESSION.get(url, timeout=10)
+        else:
+            response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
         messages = data.get("messages", [])
