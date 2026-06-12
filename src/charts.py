@@ -233,5 +233,31 @@ def analyst_donut_chart(analyst_consensus: dict) -> go.Figure:
 
 
 def figure_to_png_bytes(fig: go.Figure, width: int = 900, height: int = 500) -> bytes:
-    """Convert a Plotly figure to PNG bytes for embedding in PDF."""
-    return fig.to_image(format="png", width=width, height=height, scale=1.5)
+    """Convert a Plotly figure to PNG bytes for embedding in PDF.
+    Falls back to a blank white image if kaleido is unavailable."""
+    try:
+        return fig.to_image(format="png", width=width, height=height, scale=1.5)
+    except Exception:
+        # kaleido not available or failed — return a minimal blank PNG
+        try:
+            import matplotlib
+            matplotlib.use("Agg")
+            import matplotlib.pyplot as plt
+            fig_mpl, ax = plt.subplots(figsize=(width / 100, height / 100))
+            ax.text(0.5, 0.5, "Chart unavailable\n(kaleido not installed)",
+                    ha="center", va="center", fontsize=12, color="#999999",
+                    transform=ax.transAxes)
+            ax.axis("off")
+            buf = io.BytesIO()
+            fig_mpl.savefig(buf, format="png", bbox_inches="tight",
+                            facecolor="#1e1e1e")
+            plt.close(fig_mpl)
+            return buf.getvalue()
+        except Exception:
+            # Absolute fallback: 1x1 white PNG
+            return (
+                b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'
+                b'\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00'
+                b'\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18'
+                b'\xd8N\x00\x00\x00\x00IEND\xaeB`\x82'
+            )

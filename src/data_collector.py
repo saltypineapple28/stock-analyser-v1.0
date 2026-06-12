@@ -48,20 +48,23 @@ NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
 
 
 def _yf_ticker(ticker: str) -> yf.Ticker:
-    """Return a yfinance Ticker, retrying up to 3 times on rate-limit errors."""
+    """Return a yfinance Ticker, retrying up to 3 times on rate-limit or SSL errors."""
+    last_exc = None
     for attempt in range(3):
         try:
             t = yf.Ticker(ticker, session=_SESSION)
-            # Force a lightweight call to confirm the ticker resolves
             _ = t.fast_info
             return t
         except Exception as e:
-            if "429" in str(e) or "Too Many Requests" in str(e) or "Rate" in str(e):
-                wait = (attempt + 1) * 5
-                time.sleep(wait)
+            last_exc = e
+            err = str(e)
+            if "429" in err or "Too Many Requests" in err or "Rate" in err:
+                time.sleep((attempt + 1) * 5)
+            elif "SSL" in err or "certificate" in err or "curl" in err:
+                time.sleep(2)  # brief wait then retry with same session
             else:
-                raise
-    # Final attempt without retry guard
+                break  # non-retryable error
+    # Final attempt — no fast_info check, just return the ticker
     return yf.Ticker(ticker, session=_SESSION)
 
 
@@ -70,9 +73,27 @@ def get_stock_data(ticker: str) -> dict:
     t = _yf_ticker(ticker)
 
     # Price history – 1 year
-    history = t.history(period="1y")
+    try:
+        history = t.history(period="1y")
+    except Exception as e:
+        raise ValueError(f"Failed to fetch data for '{ticker}': {e}")
+
     if history.empty:
-        raise ValueError(f"No data found for ticker '{ticker}'. Check the symbol and try again.")
+        # Try once more without the custom session (bypasses some proxy issues)
+        try:
+            t2 = yf.Ticker(ticker)
+            history = t2.history(period="1y")
+            if not history.empty:
+                t = t2  # use the plain ticker going forward
+        except Exception:
+            pass
+
+    if history.empty:
+        raise ValueError(
+            f"No price data returned for '{ticker}'. "
+            "This may be a network/proxy issue or an invalid symbol. "
+            "Try again in a moment."
+        )
 
     time.sleep(0.5)  # brief pause between burst calls
 

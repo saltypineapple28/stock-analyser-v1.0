@@ -326,16 +326,17 @@ if analyze_btn:
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("**Valuation**")
+            def _fmt(v): return str(round(v, 2)) if isinstance(v, (int, float)) else str(v) if v else "N/A"
             st.table(pd.DataFrame({
                 "Metric": ["P/E (trailing)", "Forward P/E", "PEG Ratio",
                             "Price/Sales", "Price/Book", "EV/EBITDA"],
                 "Value": [
-                    info.get("trailingPE", "N/A"),
-                    info.get("forwardPE", "N/A"),
-                    info.get("pegRatio", "N/A"),
-                    info.get("priceToSalesTrailing12Months", "N/A"),
-                    info.get("priceToBook", "N/A"),
-                    info.get("enterpriseToEbitda", "N/A"),
+                    _fmt(info.get("trailingPE")),
+                    _fmt(info.get("forwardPE")),
+                    _fmt(info.get("pegRatio")),
+                    _fmt(info.get("priceToSalesTrailing12Months")),
+                    _fmt(info.get("priceToBook")),
+                    _fmt(info.get("enterpriseToEbitda")),
                 ],
             }))
         with c2:
@@ -367,11 +368,11 @@ if analyze_btn:
                 "Metric": ["Debt/Equity", "Current Ratio", "Quick Ratio",
                             "Total Debt", "Total Cash"],
                 "Value": [
-                    info.get("debtToEquity", "N/A"),
-                    info.get("currentRatio", "N/A"),
-                    info.get("quickRatio", "N/A"),
-                    f"${info.get('totalDebt', 'N/A'):,}" if info.get("totalDebt") else "N/A",
-                    f"${info.get('totalCash', 'N/A'):,}" if info.get("totalCash") else "N/A",
+                    _fmt(info.get("debtToEquity")),
+                    _fmt(info.get("currentRatio")),
+                    _fmt(info.get("quickRatio")),
+                    f"${info.get('totalDebt'):,}" if info.get("totalDebt") else "N/A",
+                    f"${info.get('totalCash'):,}" if info.get("totalCash") else "N/A",
                 ],
             }))
         with c4:
@@ -379,12 +380,12 @@ if analyze_btn:
                 "Metric": ["Free Cash Flow", "Operating Cash Flow",
                             "Market Cap", "EPS (TTM)", "Dividend Yield", "Beta"],
                 "Value": [
-                    f"${info.get('freeCashflow', 'N/A'):,}" if info.get("freeCashflow") else "N/A",
-                    f"${info.get('operatingCashflow', 'N/A'):,}" if info.get("operatingCashflow") else "N/A",
-                    f"${info.get('marketCap', 'N/A'):,}" if info.get("marketCap") else "N/A",
-                    info.get("trailingEps", "N/A"),
+                    f"${info.get('freeCashflow'):,}" if info.get("freeCashflow") else "N/A",
+                    f"${info.get('operatingCashflow'):,}" if info.get("operatingCashflow") else "N/A",
+                    f"${info.get('marketCap'):,}" if info.get("marketCap") else "N/A",
+                    _fmt(info.get("trailingEps")),
                     pct(info.get("dividendYield")),
-                    info.get("beta", "N/A"),
+                    _fmt(info.get("beta")),
                 ],
             }))
 

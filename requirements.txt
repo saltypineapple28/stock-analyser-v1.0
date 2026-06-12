@@ -2,6 +2,7 @@ yfinance==0.2.51
 pandas==2.2.3
 plotly==5.22.0
 kaleido==0.2.1
+matplotlib==3.9.4
 streamlit==1.35.0
 reportlab==4.2.2
 fpdf2==2.7.9
