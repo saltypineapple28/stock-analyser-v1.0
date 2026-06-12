@@ -214,9 +214,48 @@ if analyze_btn:
     progress_bar.empty()
     status_box.empty()
 
-    # ══════════════════════════════════════════════════════════════════════════
-    # RESULTS UI
-    # ══════════════════════════════════════════════════════════════════════════
+    # Save all results to session state so selectbox reruns don't wipe them
+    st.session_state["results"] = {
+        "ticker": ticker_input,
+        "company_name": company_name,
+        "info": info,
+        "price_targets": price_targets,
+        "technical_signal": technical_signal,
+        "sentiment_summary": sentiment_summary,
+        "analyst_consensus": analyst_consensus,
+        "ai_text": ai_text,
+        "news_scored": news_scored,
+        "reddit_posts": reddit_posts,
+        "stocktwits_scored": stocktwits_scored,
+        "financials_df": financials_df,
+        "csv_bytes": csv_bytes,
+        "fig_price": fig_price,
+        "fig_macd": fig_macd,
+        "fig_rsi": fig_rsi,
+        "fig_sentiment": fig_sentiment,
+        "fig_analyst": fig_analyst,
+    }
+
+if "results" in st.session_state:
+    _r = st.session_state["results"]
+    ticker_input      = _r["ticker"]
+    company_name      = _r["company_name"]
+    info              = _r["info"]
+    price_targets     = _r["price_targets"]
+    technical_signal  = _r["technical_signal"]
+    sentiment_summary = _r["sentiment_summary"]
+    analyst_consensus = _r["analyst_consensus"]
+    ai_text           = _r["ai_text"]
+    news_scored       = _r["news_scored"]
+    reddit_posts      = _r["reddit_posts"]
+    stocktwits_scored = _r["stocktwits_scored"]
+    financials_df     = _r["financials_df"]
+    csv_bytes         = _r["csv_bytes"]
+    fig_price         = _r["fig_price"]
+    fig_macd          = _r["fig_macd"]
+    fig_rsi           = _r["fig_rsi"]
+    fig_sentiment     = _r["fig_sentiment"]
+    fig_analyst       = _r["fig_analyst"]
 
     # ── Header ────────────────────────────────────────────────────────────────
     st.markdown(f"## {company_name} ({ticker_input})")
