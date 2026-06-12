@@ -274,38 +274,105 @@ if "results" in st.session_state:
     m2.metric("Technical",     technical_signal.get("overall", "N/A"))
     m3.metric("Sentiment",     sentiment_summary.get("overall_label", "N/A"))
 
-    def _ma_display(days):
-        """Compute MA directly from Close prices."""
+    # ── Helper functions ──────────────────────────────────────────────────────
+    def _ma(days):
         try:
-            if _df is not None and "Close" in _df.columns:
-                close = _df["Close"].dropna()
-                if len(close) >= days:
-                    val = close.rolling(days).mean().iloc[-1]
-                    return f"${round(float(val), 2)}"
+            close = _df["Close"].dropna()
+            if len(close) >= days:
+                return round(float(close.rolling(days).mean().iloc[-1]), 2)
         except Exception:
             pass
-        return "N/A"
+        return None
 
-    st.markdown("**Buy Zone — Moving Average Support Levels**")
+    def _bb():
+        """Returns (lower, upper) Bollinger Band values (20-day, 2σ)."""
+        try:
+            close = _df["Close"].dropna()
+            if len(close) >= 20:
+                mid = close.rolling(20).mean()
+                std = close.rolling(20).std()
+                return round(float((mid - 2*std).iloc[-1]), 2), round(float((mid + 2*std).iloc[-1]), 2)
+        except Exception:
+            pass
+        return None, None
+
+    def _fib():
+        """Returns Fibonacci retracement dict from 60-day swing high/low."""
+        try:
+            close = _df["Close"].dropna()
+            window = close.iloc[-60:] if len(close) >= 60 else close
+            high = float(window.max())
+            low  = float(window.min())
+            diff = high - low
+            return {
+                "23.6%": round(high - 0.236 * diff, 2),
+                "38.2%": round(high - 0.382 * diff, 2),
+                "50.0%": round(high - 0.500 * diff, 2),
+                "61.8%": round(high - 0.618 * diff, 2),
+                "Ext 127.2%": round(low + 1.272 * diff, 2),
+                "Ext 161.8%": round(low + 1.618 * diff, 2),
+            }
+        except Exception:
+            return {}
+
+    def _fmt(v):
+        return f"${v}" if v is not None else "N/A"
+
+    bb_lower, bb_upper = _bb()
+    fib = _fib()
+    atr = price_targets.get("atr")
+
+    # ── Buy Zone ──────────────────────────────────────────────────────────────
+    st.markdown("### 🟢 Buy Zone")
+
+    st.markdown("**Moving Average Support**")
     bz1, bz2, bz3, bz4 = st.columns(4)
-    bz1.metric("MA 5 days",  _ma_display(5))
-    bz2.metric("MA 14 days", _ma_display(14))
-    bz3.metric("MA 30 days", _ma_display(30))
-    bz4.metric("MA 60 days", _ma_display(60))
+    bz1.metric("MA 5 days",  _fmt(_ma(5)))
+    bz2.metric("MA 14 days", _fmt(_ma(14)))
+    bz3.metric("MA 30 days", _fmt(_ma(30)))
+    bz4.metric("MA 60 days", _fmt(_ma(60)))
 
-    st.markdown("**Sell Target — Moving Average Resistance Levels**")
+    st.markdown("**Bollinger Band & Fibonacci Retracement**")
+    bb1, f1, f2, f3 = st.columns(4)
+    bb1.metric("BB Lower (2σ)", _fmt(bb_lower), help="20-day lower Bollinger Band — oversold zone")
+    f1.metric("Fib 38.2%", _fmt(fib.get("38.2%")), help="38.2% retracement from 60-day high")
+    f2.metric("Fib 50.0%", _fmt(fib.get("50.0%")), help="50% retracement — key support")
+    f3.metric("Fib 61.8%", _fmt(fib.get("61.8%")), help="Golden ratio retracement — strongest support")
+
+    # ── Sell Target ───────────────────────────────────────────────────────────
+    st.markdown("### 🔴 Sell Target")
+
+    st.markdown("**Moving Average Resistance**")
     st1, st2, st3, st4 = st.columns(4)
-    st1.metric("MA 20 days", _ma_display(20))
-    st2.metric("MA 50 days", _ma_display(50))
-    st3.metric("MA 100 days", _ma_display(100))
-    st4.metric("MA 200 days", _ma_display(200))
+    st1.metric("MA 20 days",  _fmt(_ma(20)))
+    st2.metric("MA 50 days",  _fmt(_ma(50)))
+    st3.metric("MA 100 days", _fmt(_ma(100)))
+    st4.metric("MA 200 days", _fmt(_ma(200)))
 
-    st.markdown("**Cut-Loss — Moving Average Stop Levels**")
+    st.markdown("**Bollinger Band & Fibonacci Extension**")
+    bb2, fe1, fe2, an1 = st.columns(4)
+    bb2.metric("BB Upper (2σ)", _fmt(bb_upper), help="20-day upper Bollinger Band — overbought zone")
+    fe1.metric("Fib Ext 127.2%", _fmt(fib.get("Ext 127.2%")), help="127.2% extension — conservative target")
+    fe2.metric("Fib Ext 161.8%", _fmt(fib.get("Ext 161.8%")), help="161.8% golden ratio extension — strong target")
+    an1.metric("Analyst Target", _fmt(price_targets.get("analyst_mean_target")), help="Wall Street consensus")
+
+    # ── Cut-Loss ──────────────────────────────────────────────────────────────
+    st.markdown("### 🛑 Cut-Loss (Stop)")
+
+    st.markdown("**Moving Average Stops**")
     cl1, cl2, cl3, cl4 = st.columns(4)
-    cl1.metric("MA 5 days",  _ma_display(5))
-    cl2.metric("MA 10 days", _ma_display(10))
-    cl3.metric("MA 20 days", _ma_display(20))
-    cl4.metric("MA 50 days", _ma_display(50))
+    cl1.metric("MA 5 days",  _fmt(_ma(5)))
+    cl2.metric("MA 10 days", _fmt(_ma(10)))
+    cl3.metric("MA 20 days", _fmt(_ma(20)))
+    cl4.metric("MA 50 days", _fmt(_ma(50)))
+
+    st.markdown("**ATR & Bollinger Band Stops**")
+    atr1, atr2, atr3, _ = st.columns(4)
+    atr_1x = round(price_targets["current_price"] - 1.5 * atr, 2) if atr and price_targets.get("current_price") else None
+    atr_2x = round(price_targets["current_price"] - 2.0 * atr, 2) if atr and price_targets.get("current_price") else None
+    atr1.metric("ATR 1.5×", _fmt(atr_1x), help=f"Current price minus 1.5× ATR (${atr})")
+    atr2.metric("ATR 2.0×", _fmt(atr_2x), help=f"Current price minus 2× ATR (${atr})")
+    atr3.metric("BB Lower (2σ)", _fmt(bb_lower), help="Close below lower band = exit signal")
 
     # ── Download buttons ──────────────────────────────────────────────────────
     st.markdown("---")
