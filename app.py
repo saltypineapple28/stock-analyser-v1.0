@@ -269,15 +269,13 @@ if "results" in st.session_state:
     # ── Key metrics row ───────────────────────────────────────────────────────
     st.markdown("---")
 
-    m1, m2, m3, m4, m5 = st.columns(5)
+    m1, m2, m3 = st.columns(3)
     m1.metric("Current Price", f"${price_targets.get('current_price', 'N/A')}")
-    m2.metric("Sell Target",   f"${price_targets.get('sell_price', 'N/A')}", delta="Exit", delta_color="normal")
-    m3.metric("Cut-Loss",      f"${price_targets.get('cut_loss_price', 'N/A')}", delta="Stop-loss", delta_color="inverse")
-    m4.metric("Technical",     technical_signal.get("overall", "N/A"))
-    m5.metric("Sentiment",     sentiment_summary.get("overall_label", "N/A"))
+    m2.metric("Technical",     technical_signal.get("overall", "N/A"))
+    m3.metric("Sentiment",     sentiment_summary.get("overall_label", "N/A"))
 
     def _ma_display(days):
-        """Compute MA directly from Close prices - no dependency on column names."""
+        """Compute MA directly from Close prices."""
         try:
             if _df is not None and "Close" in _df.columns:
                 close = _df["Close"].dropna()
@@ -294,6 +292,20 @@ if "results" in st.session_state:
     bz2.metric("MA 14 days", _ma_display(14))
     bz3.metric("MA 30 days", _ma_display(30))
     bz4.metric("MA 60 days", _ma_display(60))
+
+    st.markdown("**Sell Target — Moving Average Resistance Levels**")
+    st1, st2, st3, st4 = st.columns(4)
+    st1.metric("MA 20 days", _ma_display(20))
+    st2.metric("MA 50 days", _ma_display(50))
+    st3.metric("MA 100 days", _ma_display(100))
+    st4.metric("MA 200 days", _ma_display(200))
+
+    st.markdown("**Cut-Loss — Moving Average Stop Levels**")
+    cl1, cl2, cl3, cl4 = st.columns(4)
+    cl1.metric("MA 5 days",  _ma_display(5))
+    cl2.metric("MA 10 days", _ma_display(10))
+    cl3.metric("MA 20 days", _ma_display(20))
+    cl4.metric("MA 50 days", _ma_display(50))
 
     # ── Download buttons ──────────────────────────────────────────────────────
     st.markdown("---")
