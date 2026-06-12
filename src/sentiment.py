@@ -109,7 +109,9 @@ def analyze_yf_news(yf_news: list) -> list[dict]:
 
 
 def get_reddit_posts(ticker: str, company_name: str = "") -> list[dict]:
-    """Fetch Reddit posts via RSS feed — works without OAuth on cloud servers."""
+    """Fetch Reddit posts via RSS feed — works without OAuth on cloud servers.
+    Note: upvote/comment counts are not available without Reddit OAuth credentials.
+    """
     query = f"{ticker} {company_name}".strip()
     verify = False if os.getenv("CORPORATE_PROXY", "false").lower() == "true" else True
     headers = {
@@ -138,18 +140,14 @@ def get_reddit_posts(ticker: str, company_name: str = "") -> list[dict]:
                     continue
                 link_el = entry.find(f"{{{NS}}}link")
                 link = link_el.get("href", "") if link_el is not None else ""
-                content = (entry.findtext(f"{{{NS}}}content") or "")[:200]
-                content = re.sub(r"<[^>]+>", "", content).strip()
-                pub_raw = entry.findtext(f"{{{NS}}}updated") or ""
-                created = pub_raw[:10]
+                content = re.sub(r"<[^>]+>", "", (entry.findtext(f"{{{NS}}}content") or "")[:200]).strip()
+                created = (entry.findtext(f"{{{NS}}}updated") or "")[:10]
                 sentiment = score_text(f"{title} {content}")
                 posts.append({
                     "subreddit": subreddit_name,
                     "title": title,
-                    "score": 0,
                     "url": link,
                     "created_utc": created,
-                    "num_comments": 0,
                     "sentiment_score": sentiment["compound"],
                     "sentiment_label": sentiment["label"],
                 })
@@ -158,6 +156,14 @@ def get_reddit_posts(ticker: str, company_name: str = "") -> list[dict]:
 
     posts.sort(key=lambda x: x.get("created_utc", ""), reverse=True)
     return posts[:30]
+
+
+def _reddit_json(subreddit, query, headers, verify):
+    pass  # Kept for import compatibility
+
+
+def _reddit_rss(subreddit, query, headers, verify):
+    pass  # Kept for import compatibility
 
 
 def analyze_stocktwits(messages: list) -> list[dict]:
