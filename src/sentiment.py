@@ -80,9 +80,9 @@ def analyze_yf_news(yf_news: list) -> list[dict]:
             source = content.get("provider", {}).get("displayName", "")
             url = (content.get("canonicalUrl") or {}).get("url", "") or \
                   (content.get("clickThroughUrl") or {}).get("url", "")
-        description = re.sub(r"<[^>]+>", "", content.get("summary", "") or content.get("description", "") or "")
+            raw_desc = content.get("summary", "") or content.get("description", "") or ""
+            description = re.sub(r"<[^>]+>", "", raw_desc)
             pub_raw = content.get("pubDate", "")
-            # pubDate is already ISO string e.g. "2024-06-12T10:00:00Z"
             pub_date = pub_raw[:19] + "Z" if pub_raw else ""
         else:
             # ── Old format: flat dict ──
