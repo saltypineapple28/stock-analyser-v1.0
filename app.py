@@ -34,13 +34,18 @@ st.set_page_config(
     page_title="StockAnalyzr",
     page_icon="📈",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ── Custom CSS ─────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-    .main-header {font-size: 2rem; font-weight: 700; color: #1565C0;}
+    /* hide sidebar toggle */
+    [data-testid="collapsedControl"] {display: none;}
+    section[data-testid="stSidebar"] {display: none;}
+
+    .main-header {font-size: 2.4rem; font-weight: 800; color: #1565C0; letter-spacing:-1px;}
+    .sub-header  {font-size: 1rem; color: #9E9E9E; margin-top:-8px; margin-bottom:16px;}
     .metric-card {
         background: #F5F5F5; border-radius: 8px;
         padding: 12px 16px; margin: 4px 0;
@@ -55,62 +60,57 @@ st.markdown("""
     .stButton>button {
         background-color: #1565C0; color: white;
         border-radius: 6px; border: none;
-        padding: 0.5rem 1.5rem; font-weight: 600;
+        padding: 0.55rem 2rem; font-weight: 700; font-size: 1rem;
     }
     .stButton>button:hover {background-color: #0D47A1;}
+    .feature-box {
+        background: #F8F9FA; border-radius: 10px;
+        padding: 14px 16px; font-size: 0.85rem; line-height: 1.7;
+        border-left: 3px solid #1565C0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 
-# ── Sidebar ────────────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("## 📈 StockAnalyzr")
-    st.markdown("---")
+# ── Hero header ────────────────────────────────────────────────────────────────
+st.markdown('<div class="main-header">📈 StockAnalyzr</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-header">AI-powered stock analysis · Price targets · Sentiment · Insider trades</div>', unsafe_allow_html=True)
+st.markdown("---")
 
+# ── Input section ──────────────────────────────────────────────────────────────
+inp_col, opt_col = st.columns([2, 3], gap="large")
+
+with inp_col:
+    st.markdown("#### 🔎 Ticker Symbol")
     ticker_input = st.text_input(
-        "Stock Ticker Symbol",
-        placeholder="e.g. AAPL, MSFT, TSLA",
-        help="Enter the stock ticker symbol (e.g. AAPL for Apple Inc.)",
+        "ticker",
+        placeholder="e.g. AAPL, MSFT, TSLA, AMD",
+        label_visibility="collapsed",
     ).strip().upper()
-
-    st.markdown("#### Analysis Options")
-    run_ai = st.checkbox("AI Analysis (GPT-4o)", value=True,
-                          help="Requires OpenAI API key in .env")
-    run_reddit = st.checkbox("Reddit Sentiment", value=True,
-                              help="Requires Reddit credentials in .env")
-    run_news = st.checkbox("News Articles (NewsAPI)", value=True,
-                            help="Requires NewsAPI key in .env. Falls back to yfinance news.")
-
     analyze_btn = st.button("🔍 Analyze Stock", use_container_width=True)
 
-    st.markdown("---")
-    st.markdown("#### About")
-    st.markdown("""
-This tool collects:
-- **Price data** via yfinance
-- **News** via NewsAPI + yfinance
-- **Social** via Reddit + StockTwits + SEC Form 4 insider trades
-- **Technicals** via MA, Bollinger Bands, Fibonacci, ATR
-- **AI analysis** via GPT-4o
-- **CSV** export
-    """)
-    st.markdown("---")
-    st.markdown("""
-<div style='font-size:0.75rem; color:#9E9E9E; line-height:1.8;'>
-    <b>Author:</b> @okelaloli<br>
-    <b>Version:</b> 1.0<br>
-    <b>Published:</b> 12/06/2026
-</div>
-""", unsafe_allow_html=True)
+with opt_col:
+    st.markdown("#### ⚙️ Analysis Options")
+    o1, o2, o3 = st.columns(3)
+    run_ai     = o1.checkbox("🤖 AI Analysis",      value=True, help="GPT-4o summary")
+    run_reddit = o2.checkbox("💬 Reddit Sentiment",  value=True, help="Public RSS feed")
+    run_news   = o3.checkbox("📰 News Articles",     value=True, help="NewsAPI + yfinance fallback")
 
+st.markdown("---")
 
-# ── Main area ──────────────────────────────────────────────────────────────────
-st.markdown('<div class="main-header">📈 StockAnalyzr</div>', unsafe_allow_html=True)
-st.markdown("Enter a ticker symbol in the sidebar and click **Analyze Stock** to begin.")
+# ── About / feature strip ──────────────────────────────────────────────────────
+a1, a2, a3, a4, a5 = st.columns(5)
+a1.markdown("<div class='feature-box'>📊 <b>Price Charts</b><br>Candlestick · MA · Bollinger Bands</div>", unsafe_allow_html=True)
+a2.markdown("<div class='feature-box'>📉 <b>Technicals</b><br>RSI · MACD · ATR · Fibonacci</div>", unsafe_allow_html=True)
+a3.markdown("<div class='feature-box'>🗞️ <b>News & Social</b><br>Reddit · StockTwits · NewsAPI</div>", unsafe_allow_html=True)
+a4.markdown("<div class='feature-box'>🏛️ <b>Insider Trades</b><br>SEC Form 4 filings</div>", unsafe_allow_html=True)
+a5.markdown("<div class='feature-box'>🤖 <b>AI Analysis</b><br>GPT-4o investment summary</div>", unsafe_allow_html=True)
+
+st.markdown("")
 
 if analyze_btn:
     if not ticker_input:
-        st.error("Please enter a ticker symbol in the sidebar.")
+        st.error("Please enter a ticker symbol above.")
         st.stop()
 
     # ── Progress tracking ──────────────────────────────────────────────────────
@@ -620,16 +620,4 @@ if "results" in st.session_state:
 
 else:
     # ── Empty state ────────────────────────────────────────────────────────────
-    st.markdown("---")
-    col_a, col_b, col_c = st.columns(3)
-    col_a.info("**Step 1**\nEnter a ticker symbol in the sidebar (e.g. `AAPL`, `MSFT`, `TSLA`)")
-    col_b.info("**Step 2**\nSelect your analysis options (AI, Reddit, News)")
-    col_c.info("**Step 3**\nClick **Analyze Stock** and monitor live progress")
-
-    st.markdown("---")
-    st.markdown("### What you'll get")
-    f1, f2, f3, f4 = st.columns(4)
-    f1.markdown("📊 **Price Charts**\nCandlestick, MA, Bollinger Bands, volume")
-    f2.markdown("📉 **Technicals**\nRSI, MACD, trend signals, price targets")
-    f3.markdown("🤖 **AI Analysis**\nGPT-4o investment summary & recommendation")
-    f4.markdown("📄 **PDF + CSV**\nDownloadable report and financial data")
+    st.info("Enter a ticker symbol above and click **🔍 Analyze Stock** to get started.")
