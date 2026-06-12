@@ -276,24 +276,24 @@ if "results" in st.session_state:
     m4.metric("Technical",     technical_signal.get("overall", "N/A"))
     m5.metric("Sentiment",     sentiment_summary.get("overall_label", "N/A"))
 
-    def _ma_display(col):
-        """Read latest MA value directly from stored df."""
+    def _ma_display(days):
+        """Compute MA directly from Close prices - no dependency on column names."""
         try:
-            if _df is not None and col in _df.columns:
-                s = _df[col].dropna()
-                if not s.empty:
-                    return f"${round(float(s.iloc[-1]), 2)}"
+            if _df is not None and "Close" in _df.columns:
+                close = _df["Close"].dropna()
+                if len(close) >= days:
+                    val = close.rolling(days).mean().iloc[-1]
+                    return f"${round(float(val), 2)}"
         except Exception:
             pass
-        v = price_targets.get(col.lower().replace("ma", "buy_zone_ma"))
-        return f"${v}" if v else "N/A"
+        return "N/A"
 
     st.markdown("**Buy Zone — Moving Average Support Levels**")
     bz1, bz2, bz3, bz4 = st.columns(4)
-    bz1.metric("MA 5 days",  _ma_display("MA5"))
-    bz2.metric("MA 14 days", _ma_display("MA14"))
-    bz3.metric("MA 30 days", _ma_display("MA30"))
-    bz4.metric("MA 60 days", _ma_display("MA60"))
+    bz1.metric("MA 5 days",  _ma_display(5))
+    bz2.metric("MA 14 days", _ma_display(14))
+    bz3.metric("MA 30 days", _ma_display(30))
+    bz4.metric("MA 60 days", _ma_display(60))
 
     # ── Download buttons ──────────────────────────────────────────────────────
     st.markdown("---")
@@ -430,10 +430,10 @@ if "results" in st.session_state:
             st.metric("Cut-Loss (Stop)", f"${price_targets.get('cut_loss_price', 'N/A')}",
                       help=f"Based on 2× ATR (${price_targets.get('atr', 'N/A')})")
             st.markdown("**Buy Zone (MA Support)**")
-            st.metric("MA 5d",  _ma_display("MA5"))
-            st.metric("MA 14d", _ma_display("MA14"))
-            st.metric("MA 30d", _ma_display("MA30"))
-            st.metric("MA 60d", _ma_display("MA60")) 
+            st.metric("MA 5d",  _ma_display(5))
+            st.metric("MA 14d", _ma_display(14))
+            st.metric("MA 30d", _ma_display(30))
+            st.metric("MA 60d", _ma_display(60)) 
 
     # ── Tab: AI Analysis ──────────────────────────────────────────────────────
     with tab_ai:
