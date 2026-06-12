@@ -413,13 +413,15 @@ if "results" in st.session_state:
         st.plotly_chart(fig_macd, use_container_width=True)
         st.plotly_chart(fig_rsi, use_container_width=True)
 
-        with st.expander("Raw indicator data (last 30 rows)"):
+        with st.expander("Raw indicator data (last 30 days)"):
             cols_to_show = [c for c in ["Close", "MA20", "MA50", "MA200",
                                          "RSI", "MACD", "MACD_signal",
                                          "BB_upper", "BB_lower", "ATR"]
                             if _df is not None and c in _df.columns]
             if _df is not None:
-                st.dataframe(_df[cols_to_show].tail(30).sort_index(ascending=False).round(3), use_container_width=True)
+                cutoff = pd.Timestamp.now() - pd.Timedelta(days=30)
+                _recent = _df[_df.index >= cutoff] if not _df.empty else _df
+                st.dataframe(_recent[cols_to_show].sort_index(ascending=False).round(3), use_container_width=True)
 
     # ── Tab: Fundamentals ─────────────────────────────────────────────────────
     with tab_funds:
