@@ -14,42 +14,34 @@ import yfinance as yf
 import pandas as pd
 from dotenv import load_dotenv
 
-# On Streamlit Cloud (no corporate proxy) use the default session.
-# Locally set CORPORATE_PROXY=true in .env to enable SSL bypass.
+# Always use a session with browser headers to avoid Yahoo Finance bot-detection.
+# On corporate proxy (CORPORATE_PROXY=true): also disable SSL verification.
 _USE_PROXY_SESSION = os.getenv("CORPORATE_PROXY", "false").lower() == "true"
 
 if _USE_PROXY_SESSION:
-    # Disable SSL verification warnings (corporate proxy / self-signed cert environments)
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-    # Shared requests session: SSL disabled + retry on rate-limit / transient errors
-    _SESSION = requests.Session()
-    _SESSION.verify = False
+_RETRY = Retry(
+    total=5,
+    backoff_factor=2,
+    status_forcelist=[429, 500, 502, 503, 504],
+    allowed_methods=["GET", "HEAD", "OPTIONS"],
+    raise_on_status=False,
+)
+_ADAPTER = HTTPAdapter(max_retries=_RETRY)
 
-    # Retry up to 5 times with exponential backoff on 429 / 5xx responses
-    _RETRY = Retry(
-        total=5,
-        backoff_factor=2,
-        status_forcelist=[429, 500, 502, 503, 504],
-        allowed_methods=["GET", "HEAD", "OPTIONS"],
-        raise_on_status=False,
-    )
-    _ADAPTER = HTTPAdapter(max_retries=_RETRY)
-    _SESSION.mount("https://", _ADAPTER)
-    _SESSION.mount("http://", _ADAPTER)
-
-    # Mimic a real browser to avoid Yahoo Finance bot-detection
-    _SESSION.headers.update({
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/125.0.0.0 Safari/537.36"
-        ),
-        "Accept-Language": "en-US,en;q=0.9",
-    })
-else:
-    # Cloud / standard environment: use yfinance's default session
-    _SESSION = None
+_SESSION = requests.Session()
+_SESSION.verify = False if _USE_PROXY_SESSION else True
+_SESSION.mount("https://", _ADAPTER)
+_SESSION.mount("http://", _ADAPTER)
+_SESSION.headers.update({
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "en-US,en;q=0.9",
+})
 
 load_dotenv()
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
@@ -60,7 +52,7 @@ def _yf_ticker(ticker: str) -> yf.Ticker:
     last_exc = None
     for attempt in range(3):
         try:
-            t = yf.Ticker(ticker, session=_SESSION) if _SESSION else yf.Ticker(ticker)
+            t = yf.Ticker(ticker, session=_SESSION)
             _ = t.fast_info
             return t
         except Exception as e:
@@ -73,7 +65,7 @@ def _yf_ticker(ticker: str) -> yf.Ticker:
             else:
                 break
     # Final attempt — no fast_info check, just return the ticker
-    return yf.Ticker(ticker, session=_SESSION) if _SESSION else yf.Ticker(ticker)
+    return yf.Ticker(ticker, session=_SESSION)
 
 
 def get_stock_data(ticker: str) -> dict:
@@ -87,12 +79,12 @@ def get_stock_data(ticker: str) -> dict:
         raise ValueError(f"Failed to fetch data for '{ticker}': {e}")
 
     if history.empty:
-        # Try once more without the custom session (bypasses some proxy issues)
+        # Try once more with the session explicitly
         try:
-            t2 = yf.Ticker(ticker)
+            t2 = yf.Ticker(ticker, session=_SESSION)
             history = t2.history(period="1y")
             if not history.empty:
-                t = t2  # use the plain ticker going forward
+                t = t2  # use this ticker going forward
         except Exception:
             pass
 
