@@ -220,6 +220,7 @@ if analyze_btn:
         "company_name": company_name,
         "info": info,
         "price_targets": price_targets,
+        "df": df,
         "technical_signal": technical_signal,
         "sentiment_summary": sentiment_summary,
         "analyst_consensus": analyst_consensus,
@@ -242,6 +243,7 @@ if "results" in st.session_state:
     company_name      = _r["company_name"]
     info              = _r["info"]
     price_targets     = _r["price_targets"]
+    _df               = _r.get("df")
     technical_signal  = _r["technical_signal"]
     sentiment_summary = _r["sentiment_summary"]
     analyst_consensus = _r["analyst_consensus"]
@@ -274,12 +276,24 @@ if "results" in st.session_state:
     m4.metric("Technical",     technical_signal.get("overall", "N/A"))
     m5.metric("Sentiment",     sentiment_summary.get("overall_label", "N/A"))
 
+    def _ma_display(col):
+        """Read latest MA value directly from stored df."""
+        try:
+            if _df is not None and col in _df.columns:
+                s = _df[col].dropna()
+                if not s.empty:
+                    return f"${round(float(s.iloc[-1]), 2)}"
+        except Exception:
+            pass
+        v = price_targets.get(col.lower().replace("ma", "buy_zone_ma"))
+        return f"${v}" if v else "N/A"
+
     st.markdown("**Buy Zone — Moving Average Support Levels**")
     bz1, bz2, bz3, bz4 = st.columns(4)
-    bz1.metric("MA 5 days",  f"${price_targets.get('buy_zone_ma5',  'N/A')}")
-    bz2.metric("MA 14 days", f"${price_targets.get('buy_zone_ma14', 'N/A')}")
-    bz3.metric("MA 30 days", f"${price_targets.get('buy_zone_ma30', 'N/A')}")
-    bz4.metric("MA 60 days", f"${price_targets.get('buy_zone_ma60', 'N/A')}")
+    bz1.metric("MA 5 days",  _ma_display("MA5"))
+    bz2.metric("MA 14 days", _ma_display("MA14"))
+    bz3.metric("MA 30 days", _ma_display("MA30"))
+    bz4.metric("MA 60 days", _ma_display("MA60"))
 
     # ── Download buttons ──────────────────────────────────────────────────────
     st.markdown("---")
@@ -416,10 +430,10 @@ if "results" in st.session_state:
             st.metric("Cut-Loss (Stop)", f"${price_targets.get('cut_loss_price', 'N/A')}",
                       help=f"Based on 2× ATR (${price_targets.get('atr', 'N/A')})")
             st.markdown("**Buy Zone (MA Support)**")
-            st.metric("MA 5d",  f"${price_targets.get('buy_zone_ma5',  'N/A')}")
-            st.metric("MA 14d", f"${price_targets.get('buy_zone_ma14', 'N/A')}")
-            st.metric("MA 30d", f"${price_targets.get('buy_zone_ma30', 'N/A')}")
-            st.metric("MA 60d", f"${price_targets.get('buy_zone_ma60', 'N/A')}") 
+            st.metric("MA 5d",  _ma_display("MA5"))
+            st.metric("MA 14d", _ma_display("MA14"))
+            st.metric("MA 30d", _ma_display("MA30"))
+            st.metric("MA 60d", _ma_display("MA60")) 
 
     # ── Tab: AI Analysis ──────────────────────────────────────────────────────
     with tab_ai:
