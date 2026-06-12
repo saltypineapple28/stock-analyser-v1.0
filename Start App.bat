@@ -1,6 +1,6 @@
 @echo off
-title Stock Analyser
-echo Starting Stock Analyser...
+title StockAnalyzr
+echo Starting StockAnalyzr...
 echo.
 
 :: Add Python to PATH

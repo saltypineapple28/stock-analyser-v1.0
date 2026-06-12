@@ -31,7 +31,7 @@ from charts import (
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Stock Analyser",
+    page_title="StockAnalyzr",
     page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -64,7 +64,7 @@ st.markdown("""
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## 📈 Stock Analyser")
+    st.markdown("## 📈 StockAnalyzr")
     st.markdown("---")
 
     ticker_input = st.text_input(
@@ -105,7 +105,7 @@ This tool collects:
 
 
 # ── Main area ──────────────────────────────────────────────────────────────────
-st.markdown('<div class="main-header">📈 Stock Analysis Dashboard</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-header">📈 StockAnalyzr</div>', unsafe_allow_html=True)
 st.markdown("Enter a ticker symbol in the sidebar and click **Analyze Stock** to begin.")
 
 if analyze_btn:
