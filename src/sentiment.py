@@ -65,26 +65,48 @@ def analyze_news(articles: list[dict]) -> list[dict]:
 
 
 def analyze_yf_news(yf_news: list) -> list[dict]:
-    """Score yfinance news items (fallback when NewsAPI is not configured)."""
+    """Score yfinance news items (fallback when NewsAPI is not configured).
+
+    Handles both old format (providerPublishTime, title, publisher, link)
+    and new yfinance 0.2.50+ format (content.title, content.pubDate, etc.).
+    """
     scored = []
     for item in yf_news:
-        title = item.get("title", "")
-        sentiment = score_text(title)
-        # yfinance timestamps are Unix epoch
-        ts = item.get("providerPublishTime", 0)
-        try:
-            pub_date = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%dT%H:%M:%SZ")
-        except Exception:
-            pub_date = ""
+        # ── New format: data nested under 'content' key ──
+        content = item.get("content", {})
+        if content:
+            title = content.get("title", "")
+            source = content.get("provider", {}).get("displayName", "")
+            url = (content.get("canonicalUrl") or {}).get("url", "") or \
+                  (content.get("clickThroughUrl") or {}).get("url", "")
+            description = content.get("summary", "")
+            pub_raw = content.get("pubDate", "")
+            # pubDate is already ISO string e.g. "2024-06-12T10:00:00Z"
+            pub_date = pub_raw[:19] + "Z" if pub_raw else ""
+        else:
+            # ── Old format: flat dict ──
+            title = item.get("title", "")
+            source = item.get("publisher", "")
+            url = item.get("link", "")
+            description = ""
+            ts = item.get("providerPublishTime", 0)
+            try:
+                pub_date = datetime.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%dT%H:%M:%SZ") if ts else ""
+            except Exception:
+                pub_date = ""
 
+        if not title:
+            continue
+
+        sentiment = score_text(f"{title}. {description}")
         scored.append({
             "title": title,
-            "source": item.get("publisher", ""),
-            "url": item.get("link", ""),
+            "source": source,
+            "url": url,
             "published_at": pub_date,
             "sentiment_score": sentiment["compound"],
             "sentiment_label": sentiment["label"],
-            "description": "",
+            "description": description[:200] if description else "",
         })
     scored.sort(key=lambda x: x.get("published_at", ""), reverse=True)
     return scored

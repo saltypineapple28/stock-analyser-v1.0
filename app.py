@@ -387,13 +387,18 @@ if analyze_btn:
                 label = article.get("sentiment_label", "Neutral")
                 score = article.get("sentiment_score", 0)
                 color = "green" if label == "Positive" else "red" if label == "Negative" else "orange"
+                pub = article.get("published_at", "")[:10] or "Unknown date"
+                src = article.get("source", "") or "Unknown source"
+                title = article.get("title", "(No title)")
+                url = article.get("url", "#") or "#"
                 st.markdown(
-                    f"**[{article.get('title', '')}]({article.get('url', '#')})**  \n"
-                    f"*{article.get('source', '')} · {article.get('published_at', '')[:10]}*  "
-                    f"&nbsp;&nbsp; :{color}[{label} ({score:.2f})]"
+                    f"**[{title}]({url})**  \n"
+                    f"*{src} · {pub}*  "
+                    f"&nbsp;&nbsp; :{color}[{label} ({score:+.2f})]"
                 )
-                if article.get("description"):
-                    st.markdown(f"> {article['description'][:200]}")
+                desc = article.get("description", "")
+                if desc:
+                    st.markdown(f"> {desc[:250]}")
                 st.markdown("---")
         else:
             st.info("No news articles available. Add a NewsAPI key to .env for full news coverage.")
