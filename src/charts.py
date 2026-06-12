@@ -9,6 +9,14 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 
+def _clean_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Strip timezone from DatetimeIndex so kaleido can serialize it."""
+    df = df.copy()
+    if isinstance(df.index, pd.DatetimeIndex) and df.index.tz is not None:
+        df.index = df.index.tz_localize(None)
+    return df
+
+
 CHART_COLORS = {
     "price": "#2196F3",
     "ma20": "#FF9800",
@@ -29,6 +37,7 @@ CHART_COLORS = {
 
 def price_chart(df: pd.DataFrame, ticker: str, price_targets: dict = None) -> go.Figure:
     """Candlestick chart with MAs, Bollinger Bands, and price target lines."""
+    df = _clean_df(df)
     fig = make_subplots(
         rows=2, cols=1,
         shared_xaxes=True,
@@ -107,6 +116,7 @@ def price_chart(df: pd.DataFrame, ticker: str, price_targets: dict = None) -> go
 
 def macd_chart(df: pd.DataFrame, ticker: str) -> go.Figure:
     """MACD line + signal + histogram."""
+    df = _clean_df(df)
     fig = go.Figure()
 
     if "MACD_hist" in df.columns:
@@ -140,6 +150,7 @@ def macd_chart(df: pd.DataFrame, ticker: str) -> go.Figure:
 
 def rsi_chart(df: pd.DataFrame, ticker: str) -> go.Figure:
     """RSI with overbought/oversold zones."""
+    df = _clean_df(df)
     fig = go.Figure()
 
     if "RSI" in df.columns:
