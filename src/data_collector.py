@@ -14,37 +14,47 @@ import yfinance as yf
 import pandas as pd
 from dotenv import load_dotenv
 
-# Always use a session with browser headers to avoid Yahoo Finance bot-detection.
-# On corporate proxy (CORPORATE_PROXY=true): also disable SSL verification.
+# On corporate proxy (CORPORATE_PROXY=true): use a custom requests.Session with
+# SSL verification disabled. On Streamlit Cloud / any standard env: pass session=None
+# so yfinance uses its built-in curl_cffi (TLS fingerprinting) which bypasses
+# Yahoo Finance bot-detection without needing a custom session.
 _USE_PROXY_SESSION = os.getenv("CORPORATE_PROXY", "false").lower() == "true"
 
 if _USE_PROXY_SESSION:
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-_RETRY = Retry(
-    total=5,
-    backoff_factor=2,
-    status_forcelist=[429, 500, 502, 503, 504],
-    allowed_methods=["GET", "HEAD", "OPTIONS"],
-    raise_on_status=False,
-)
-_ADAPTER = HTTPAdapter(max_retries=_RETRY)
-
-_SESSION = requests.Session()
-_SESSION.verify = False if _USE_PROXY_SESSION else True
-_SESSION.mount("https://", _ADAPTER)
-_SESSION.mount("http://", _ADAPTER)
-_SESSION.headers.update({
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/125.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "en-US,en;q=0.9",
-})
+    _RETRY = Retry(
+        total=5,
+        backoff_factor=2,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET", "HEAD", "OPTIONS"],
+        raise_on_status=False,
+    )
+    _ADAPTER = HTTPAdapter(max_retries=_RETRY)
+    _SESSION = requests.Session()
+    _SESSION.verify = False
+    _SESSION.mount("https://", _ADAPTER)
+    _SESSION.mount("http://", _ADAPTER)
+    _SESSION.headers.update({
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "Accept-Language": "en-US,en;q=0.9",
+    })
+else:
+    # Let yfinance use its internal curl_cffi session (handles bot-detection natively)
+    _SESSION = None
 
 load_dotenv()
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
+
+
+def _make_ticker(ticker: str) -> yf.Ticker:
+    """Create a yfinance Ticker, using custom session only when on corporate proxy."""
+    if _SESSION is not None:
+        return yf.Ticker(ticker, session=_SESSION)
+    return yf.Ticker(ticker)
 
 
 def _yf_ticker(ticker: str) -> yf.Ticker:
@@ -52,7 +62,7 @@ def _yf_ticker(ticker: str) -> yf.Ticker:
     last_exc = None
     for attempt in range(3):
         try:
-            t = yf.Ticker(ticker, session=_SESSION)
+            t = _make_ticker(ticker)
             _ = t.fast_info
             return t
         except Exception as e:
@@ -64,8 +74,8 @@ def _yf_ticker(ticker: str) -> yf.Ticker:
                 time.sleep(2)
             else:
                 break
-    # Final attempt — no fast_info check, just return the ticker
-    return yf.Ticker(ticker, session=_SESSION)
+    # Final attempt — no fast_info check
+    return _make_ticker(ticker)
 
 
 def get_stock_data(ticker: str) -> dict:
@@ -79,12 +89,12 @@ def get_stock_data(ticker: str) -> dict:
         raise ValueError(f"Failed to fetch data for '{ticker}': {e}")
 
     if history.empty:
-        # Try once more with the session explicitly
+        # Try once more
         try:
-            t2 = yf.Ticker(ticker, session=_SESSION)
+            t2 = _make_ticker(ticker)
             history = t2.history(period="1y")
             if not history.empty:
-                t = t2  # use this ticker going forward
+                t = t2
         except Exception:
             pass
 
