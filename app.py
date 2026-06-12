@@ -75,7 +75,7 @@ st.markdown("""
 
 # ── Hero header ────────────────────────────────────────────────────────────────
 st.markdown('<div class="main-header">📈 StockAnalyzr</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">AI-powered stock analysis · Price targets · Sentiment · Insider trades</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-header">AI-powered Stock Analysis · Price targets · Technical · Sentiment · Insider trades</div>', unsafe_allow_html=True)
 st.markdown("---")
 
 # ── Input + Options + About ────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ with inp_col:
 with opt_col:
     st.markdown("#### ⚙️ Analysis Options")
     run_ai     = st.checkbox("🤖 AI Analysis",       value=True, help="GPT-4o investment summary")
-    run_reddit = st.checkbox("💬 Reddit Sentiment",   value=True, help="Public RSS feed, no auth needed")
+    run_reddit = st.checkbox("💬 Sentiment Analysis",   value=True, help="Reddit (public RSS) + StockTwits sentiment scoring via VADER")
     run_news   = st.checkbox("📰 News Articles",      value=True, help="NewsAPI + yfinance fallback")
 
 with about_col:
@@ -102,8 +102,8 @@ with about_col:
     st.markdown("""
 - 📊 Price data & technicals via **yfinance**
 - 📰 News via **NewsAPI** + yfinance
-- 💬 Social via **Reddit** + **StockTwits**
-- 🏛️ Insider trades via **SEC EDGAR**
+- 💬 Sentiment via **Reddit** (RSS) + **StockTwits** (VADER scoring)
+- 🏛️ Insider trades via **SEC EDGAR** Form 4
 - 🤖 AI analysis via **GPT-4o**
 """)
     st.markdown("<small style='color:#9E9E9E'>✍️ @okelaloli &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; Jun 2026</small>", unsafe_allow_html=True)
@@ -592,6 +592,7 @@ if "results" in st.session_state:
 
         with r_col:
             st.markdown("### Reddit")
+            st.caption(f"Source: Reddit public RSS · Subreddits: stocks, investing, wallstreetbets · Sentiment scored via VADER")
             if reddit_posts:
                 for post in reddit_posts[:10]:
                     label = post.get("sentiment_label", "Neutral")
@@ -607,12 +608,15 @@ if "results" in st.session_state:
 
         with st_col:
             st.markdown("### StockTwits")
+            st.caption(f"Source: [stocktwits.com/${ticker_input}](https://stocktwits.com/symbol/{ticker_input}) · Sentiment scored via VADER")
             if stocktwits_scored:
                 for msg in stocktwits_scored[:10]:
                     label = msg.get("sentiment_label", "Neutral")
                     color = "green" if label == "Positive" else "red" if label == "Negative" else "orange"
+                    username = msg.get('username','')
+                    user_url = f"https://stocktwits.com/{username}" if username else "#"
                     st.markdown(
-                        f"@{msg.get('username','')} · {msg.get('created_at','')[:10]}  \n"
+                        f"**[@{username}]({user_url})** · {msg.get('created_at','')[:10]}  \n"
                         f"{msg.get('body', '')}  \n"
                         f":{color}[{label}]"
                     )
