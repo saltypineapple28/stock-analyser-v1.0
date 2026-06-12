@@ -1,5 +1,6 @@
 yfinance==0.2.51
 curl_cffi>=0.7.0
+lxml>=5.0.0
 pandas==2.2.3
 plotly==5.22.0
 matplotlib==3.9.4

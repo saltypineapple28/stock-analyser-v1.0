@@ -57,46 +57,51 @@ def _make_ticker(ticker: str) -> yf.Ticker:
     return yf.Ticker(ticker)
 
 
-def _yf_ticker(ticker: str) -> yf.Ticker:
-    """Return a yfinance Ticker, retrying up to 3 times on rate-limit or SSL errors."""
-    last_exc = None
+def _fetch_history(ticker: str) -> tuple:
+    """
+    Fetch 1-year price history. Returns (history_df, ticker_obj).
+    Tries yf.download() first (more reliable on cloud), falls back to t.history().
+    """
+    # --- Attempt 1: yf.download() ---
+    try:
+        hist = yf.download(
+            ticker,
+            period="1y",
+            auto_adjust=True,
+            progress=False,
+        )
+        if not hist.empty:
+            # Flatten MultiIndex columns if present (yf.download returns them for single ticker)
+            if isinstance(hist.columns, pd.MultiIndex):
+                hist.columns = hist.columns.get_level_values(0)
+            t = _make_ticker(ticker)
+            return hist, t
+    except Exception:
+        pass
+
+    # --- Attempt 2: t.history() with session ---
     for attempt in range(3):
         try:
             t = _make_ticker(ticker)
-            _ = t.fast_info
-            return t
+            hist = t.history(period="1y")
+            if not hist.empty:
+                return hist, t
         except Exception as e:
-            last_exc = e
             err = str(e)
-            if "429" in err or "Too Many Requests" in err or "Rate" in err:
+            if "429" in err or "Too Many Requests" in err:
                 time.sleep((attempt + 1) * 5)
-            elif "SSL" in err or "certificate" in err or "curl" in err:
+            elif "SSL" in err or "certificate" in err:
                 time.sleep(2)
             else:
                 break
-    # Final attempt — no fast_info check
-    return _make_ticker(ticker)
+        time.sleep(1)
+
+    return pd.DataFrame(), _make_ticker(ticker)
 
 
 def get_stock_data(ticker: str) -> dict:
     """Fetch comprehensive stock data from yfinance."""
-    t = _yf_ticker(ticker)
-
-    # Price history – 1 year
-    try:
-        history = t.history(period="1y")
-    except Exception as e:
-        raise ValueError(f"Failed to fetch data for '{ticker}': {e}")
-
-    if history.empty:
-        # Try once more
-        try:
-            t2 = _make_ticker(ticker)
-            history = t2.history(period="1y")
-            if not history.empty:
-                t = t2
-        except Exception:
-            pass
+    history, t = _fetch_history(ticker)
 
     if history.empty:
         raise ValueError(
