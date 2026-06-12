@@ -88,8 +88,10 @@ with inp_col:
         placeholder="e.g. AAPL, MSFT, TSLA, AMD",
         label_visibility="collapsed",
     ).strip().upper()
+    st.caption("Don't know the ticker? [Search on Yahoo Finance](https://finance.yahoo.com/lookup/) · [Search on Google Finance](https://www.google.com/finance/)")
     st.markdown("")
     analyze_btn = st.button("🔍 Analyze Stock", use_container_width=True)
+    st.caption("💡 Tip: change Light/Dark theme via the **⋮ menu** (top-right) → Settings")
 
 with opt_col:
     st.markdown("#### ⚙️ Analysis Options")
