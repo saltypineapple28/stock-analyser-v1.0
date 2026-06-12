@@ -14,5 +14,5 @@ vaderSentiment==3.3.2
 requests==2.32.3
 urllib3==2.2.2
 python-dotenv==1.0.1
-Pillow==10.4.0
-numpy==1.26.4
+Pillow>=10.4.0
+numpy>=1.26.4
