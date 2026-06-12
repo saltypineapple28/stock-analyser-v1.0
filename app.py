@@ -85,8 +85,6 @@ with st.sidebar:
 
     analyze_btn = st.button("🔍 Analyze Stock", use_container_width=True)
 
-    analyze_btn = st.button("🔍 Analyze Stock", use_container_width=True)
-
     st.markdown("---")
     st.markdown("#### About")
     st.markdown("""
