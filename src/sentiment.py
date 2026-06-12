@@ -1,27 +1,21 @@
 """
 sentiment.py
 Scores news articles and social posts using VADER sentiment analysis.
-Also fetches Reddit posts via PRAW.
+Fetches Reddit posts via public JSON API (no credentials required).
 """
 
 import os
 import re
-import ssl
 import datetime
 import urllib3
 import requests
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-import praw
 from dotenv import load_dotenv
 
 # Disable SSL verification warnings for corporate proxy environments
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 load_dotenv()
-
-REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID", "")
-REDDIT_CLIENT_SECRET = os.getenv("REDDIT_CLIENT_SECRET", "")
-REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT", "StockAnalyzer/1.0")
 
 analyzer = SentimentIntensityAnalyzer()
 
@@ -114,56 +108,45 @@ def analyze_yf_news(yf_news: list) -> list[dict]:
 
 
 def get_reddit_posts(ticker: str, company_name: str = "") -> list[dict]:
-    """Fetch Reddit posts mentioning the ticker from key subreddits."""
-    if not REDDIT_CLIENT_ID or REDDIT_CLIENT_ID == "your_reddit_client_id":
-        return []
+    """Fetch Reddit posts using the public JSON API — no credentials required."""
+    query = f"{ticker} {company_name}".strip()
+    verify = False if os.getenv("CORPORATE_PROXY", "false").lower() == "true" else True
+    headers = {"User-Agent": "StockAnalyzer/1.0 (public research tool)"}
+    posts = []
 
-    try:
-        # On corporate proxy, use a custom session with SSL verification disabled.
-        # On Streamlit Cloud (CORPORATE_PROXY not set), use default PRAW session.
-        use_proxy = os.getenv("CORPORATE_PROXY", "false").lower() == "true"
-        if use_proxy:
-            import prawcore
-            _session = requests.Session()
-            _session.verify = False
-            requestor = prawcore.Requestor(REDDIT_USER_AGENT, session=_session)
-            reddit = praw.Reddit(
-                client_id=REDDIT_CLIENT_ID,
-                client_secret=REDDIT_CLIENT_SECRET,
-                user_agent=REDDIT_USER_AGENT,
-                requestor=requestor,
-            )
-        else:
-            reddit = praw.Reddit(
-                client_id=REDDIT_CLIENT_ID,
-                client_secret=REDDIT_CLIENT_SECRET,
-                user_agent=REDDIT_USER_AGENT,
-            )
-        posts = []
-        query = f"{ticker} {company_name}".strip()
-        for subreddit_name in SUBREDDITS:
-            try:
-                subreddit = reddit.subreddit(subreddit_name)
-                for submission in subreddit.search(query, limit=10, time_filter="year"):
-                    sentiment = score_text(f"{submission.title} {submission.selftext[:200]}")
-                    posts.append({
-                        "subreddit": subreddit_name,
-                        "title": submission.title,
-                        "score": submission.score,
-                        "url": f"https://reddit.com{submission.permalink}",
-                        "created_utc": datetime.datetime.fromtimestamp(
-                            submission.created_utc
-                        ).strftime("%Y-%m-%d"),
-                        "num_comments": submission.num_comments,
-                        "sentiment_score": sentiment["compound"],
-                        "sentiment_label": sentiment["label"],
-                    })
-            except Exception:
+    for subreddit_name in SUBREDDITS:
+        try:
+            url = f"https://www.reddit.com/r/{subreddit_name}/search.json"
+            params = {"q": query, "sort": "relevance", "t": "year", "limit": 10}
+            r = requests.get(url, headers=headers, params=params,
+                             timeout=10, verify=verify)
+            if r.status_code != 200:
                 continue
-        posts.sort(key=lambda x: x.get("score", 0), reverse=True)
-        return posts[:30]
-    except Exception:
-        return []
+            children = r.json().get("data", {}).get("children", [])
+            for child in children:
+                d = child.get("data", {})
+                title = d.get("title", "")
+                if not title:
+                    continue
+                body = d.get("selftext", "")[:200]
+                sentiment = score_text(f"{title} {body}")
+                ts = d.get("created_utc", 0)
+                created = datetime.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d") if ts else ""
+                posts.append({
+                    "subreddit": subreddit_name,
+                    "title": title,
+                    "score": d.get("score", 0),
+                    "url": f"https://reddit.com{d.get('permalink', '')}",
+                    "created_utc": created,
+                    "num_comments": d.get("num_comments", 0),
+                    "sentiment_score": sentiment["compound"],
+                    "sentiment_label": sentiment["label"],
+                })
+        except Exception:
+            continue
+
+    posts.sort(key=lambda x: x.get("score", 0), reverse=True)
+    return posts[:30]
 
 
 def analyze_stocktwits(messages: list) -> list[dict]:
