@@ -417,8 +417,9 @@ if "results" in st.session_state:
             cols_to_show = [c for c in ["Close", "MA20", "MA50", "MA200",
                                          "RSI", "MACD", "MACD_signal",
                                          "BB_upper", "BB_lower", "ATR"]
-                            if c in df.columns]
-            st.dataframe(df[cols_to_show].tail(30).sort_index(ascending=False).round(3), use_container_width=True)
+                            if _df is not None and c in _df.columns]
+            if _df is not None:
+                st.dataframe(_df[cols_to_show].tail(30).sort_index(ascending=False).round(3), use_container_width=True)
 
     # ── Tab: Fundamentals ─────────────────────────────────────────────────────
     with tab_funds:
