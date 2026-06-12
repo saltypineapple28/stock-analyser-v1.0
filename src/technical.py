@@ -19,6 +19,7 @@ def compute_indicators(history: pd.DataFrame) -> pd.DataFrame:
     # --- Moving Averages ---
     df["MA20"] = close.rolling(20).mean()
     df["MA50"] = close.rolling(50).mean()
+    df["MA60"] = close.rolling(60).mean()
     df["MA200"] = close.rolling(200).mean()
 
     # --- Bollinger Bands (20-day, 2 std) ---
@@ -82,8 +83,31 @@ def derive_price_targets(df: pd.DataFrame, analyst_targets: dict, info: dict) ->
     if analyst_high is None:
         analyst_high = info.get("targetHighPrice")
 
-    # Buy price: current price or slightly below (within 2% of current)
-    buy_price = round(latest * 0.98, 2) if latest else None
+    # ── Support-Based Buy Zone ────────────────────────────────────────────────
+    # Uses the highest support level below current price from three sources:
+    #   1. MA60  — 60-day moving average (medium-term trend support)
+    #   2. Recent swing low — lowest close over the past 60 days
+    #   3. Demand zone — 10th percentile of closes over the past 60 days
+    buy_price = None
+    if latest:
+        close_60 = df["Close"].dropna().iloc[-60:] if len(df) >= 60 else df["Close"].dropna()
+        ma60 = df["MA60"].dropna().iloc[-1] if not df["MA60"].dropna().empty else None
+
+        # Swing low: lowest close in the last 60 sessions
+        swing_low = float(close_60.min()) if not close_60.empty else None
+
+        # Demand zone: 10th-percentile price over 60 days (strong support band bottom)
+        demand_zone = float(np.percentile(close_60, 10)) if not close_60.empty else None
+
+        # Collect all support candidates that are strictly below current price
+        candidates = [v for v in [ma60, swing_low, demand_zone] if v and v < latest]
+
+        if candidates:
+            # Use the highest support level below current price (closest floor)
+            buy_price = round(max(candidates), 2)
+        else:
+            # All supports are above current price (strong uptrend) — use MA60 or -3%
+            buy_price = round(float(ma60), 2) if ma60 else round(latest * 0.97, 2)
 
     # Sell / target price: use analyst mean target, fallback to +20% of current
     if analyst_mean and latest:
