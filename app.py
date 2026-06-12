@@ -215,21 +215,15 @@ if analyze_btn:
     # ── Step 10: PDF ──────────────────────────────────────────────────────────
     update_status("Building PDF report…", 96)
     try:
-        chart_price_png = figure_to_png_bytes(fig_price, 900, 500)
-        chart_macd_png = figure_to_png_bytes(fig_macd, 900, 300)
-        chart_rsi_png = figure_to_png_bytes(fig_rsi, 900, 280)
-        chart_sentiment_png = figure_to_png_bytes(fig_sentiment, 700, 300)
-        chart_analyst_png = figure_to_png_bytes(fig_analyst, 600, 320)
-
         pdf_bytes = build_pdf_report(
             ticker=ticker_input, info=info, price_targets=price_targets,
             technical_signal=technical_signal, sentiment_summary=sentiment_summary,
             analyst_consensus=analyst_consensus, ai_analysis_text=ai_text,
             news_scored=news_scored, reddit_posts=reddit_posts,
             stocktwits_scored=stocktwits_scored,
-            chart_price_png=chart_price_png, chart_macd_png=chart_macd_png,
-            chart_rsi_png=chart_rsi_png, chart_sentiment_png=chart_sentiment_png,
-            chart_analyst_png=chart_analyst_png,
+            chart_price_png=None, chart_macd_png=None,
+            chart_rsi_png=None, chart_sentiment_png=None,
+            chart_analyst_png=None,
         )
         pdf_ok = True
     except Exception as e:

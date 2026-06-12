@@ -116,8 +116,10 @@ def _kv_table(rows: list[tuple], col_widths=None) -> Table:
     return tbl
 
 
-def _embed_chart(png_bytes: bytes, width_cm: float = 16, caption: str = "") -> list:
-    """Wrap PNG bytes into a reportlab Image flowable."""
+def _embed_chart(png_bytes, width_cm: float = 16, caption: str = "") -> list:
+    """Wrap PNG bytes into a reportlab Image flowable. Skips if png_bytes is None."""
+    if not png_bytes:
+        return []
     st = _styles()
     buf = io.BytesIO(png_bytes)
     img = Image(buf, width=width_cm * cm, height=(width_cm * 0.56) * cm)
