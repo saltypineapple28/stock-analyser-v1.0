@@ -57,32 +57,68 @@ def _make_ticker(ticker: str) -> yf.Ticker:
     return yf.Ticker(ticker)
 
 
+def _fetch_history_direct(ticker: str) -> pd.DataFrame:
+    """
+    Fetch 1-year OHLCV data via Yahoo Finance chart API directly.
+    This bypasses yfinance session management and works reliably on cloud.
+    """
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+    params = {"range": "1y", "interval": "1d", "events": "history", "includePrePost": "false"}
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json",
+        "Referer": "https://finance.yahoo.com",
+    }
+    try:
+        verify = False if _USE_PROXY_SESSION else True
+        r = requests.get(url, params=params, headers=headers, timeout=20, verify=verify)
+        data = r.json()
+        result = data["chart"]["result"][0]
+        timestamps = result["timestamp"]
+        quote = result["indicators"]["quote"][0]
+        adjclose = result["indicators"].get("adjclose", [{}])[0].get("adjclose", quote["close"])
+        df = pd.DataFrame({
+            "Open": quote["open"],
+            "High": quote["high"],
+            "Low": quote["low"],
+            "Close": adjclose,
+            "Volume": quote["volume"],
+        }, index=pd.to_datetime(timestamps, unit="s", utc=True).tz_localize(None))
+        df.index.name = "Date"
+        return df.dropna(subset=["Close"])
+    except Exception:
+        return pd.DataFrame()
+
+
 def _fetch_history(ticker: str) -> tuple:
     """
     Fetch 1-year price history. Returns (history_df, ticker_obj).
-    Tries yf.download() first (more reliable on cloud), falls back to t.history().
+    Tries direct HTTP API first, then yf.download(), then t.history().
     """
-    # --- Attempt 1: yf.download() ---
+    t = _make_ticker(ticker)
+
+    # --- Attempt 1: Direct Yahoo Finance API (most reliable on cloud) ---
+    hist = _fetch_history_direct(ticker)
+    if not hist.empty:
+        return hist, t
+
+    # --- Attempt 2: yf.download() ---
     try:
-        hist = yf.download(
-            ticker,
-            period="1y",
-            auto_adjust=True,
-            progress=False,
-        )
+        hist = yf.download(ticker, period="1y", auto_adjust=True, progress=False)
         if not hist.empty:
-            # Flatten MultiIndex columns if present (yf.download returns them for single ticker)
             if isinstance(hist.columns, pd.MultiIndex):
                 hist.columns = hist.columns.get_level_values(0)
-            t = _make_ticker(ticker)
             return hist, t
     except Exception:
         pass
 
-    # --- Attempt 2: t.history() with session ---
+    # --- Attempt 3: t.history() ---
     for attempt in range(3):
         try:
-            t = _make_ticker(ticker)
             hist = t.history(period="1y")
             if not hist.empty:
                 return hist, t
@@ -96,7 +132,7 @@ def _fetch_history(ticker: str) -> tuple:
                 break
         time.sleep(1)
 
-    return pd.DataFrame(), _make_ticker(ticker)
+    return pd.DataFrame(), t
 
 
 def get_stock_data(ticker: str) -> dict:
