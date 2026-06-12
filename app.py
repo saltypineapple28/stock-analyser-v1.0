@@ -64,9 +64,10 @@ st.markdown("""
     }
     .stButton>button:hover {background-color: #0D47A1;}
     .feature-box {
-        background: #F8F9FA; border-radius: 10px;
+        border-radius: 10px;
         padding: 14px 16px; font-size: 0.85rem; line-height: 1.7;
         border-left: 3px solid #1565C0;
+        color: inherit;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -77,8 +78,8 @@ st.markdown('<div class="main-header">📈 StockAnalyzr</div>', unsafe_allow_htm
 st.markdown('<div class="sub-header">AI-powered stock analysis · Price targets · Sentiment · Insider trades</div>', unsafe_allow_html=True)
 st.markdown("---")
 
-# ── Input section ──────────────────────────────────────────────────────────────
-inp_col, opt_col = st.columns([2, 3], gap="large")
+# ── Input + Options + About ────────────────────────────────────────────────────
+inp_col, opt_col, about_col = st.columns([2, 2, 2], gap="large")
 
 with inp_col:
     st.markdown("#### 🔎 Ticker Symbol")
@@ -87,26 +88,28 @@ with inp_col:
         placeholder="e.g. AAPL, MSFT, TSLA, AMD",
         label_visibility="collapsed",
     ).strip().upper()
+    st.markdown("")
     analyze_btn = st.button("🔍 Analyze Stock", use_container_width=True)
 
 with opt_col:
     st.markdown("#### ⚙️ Analysis Options")
-    o1, o2, o3 = st.columns(3)
-    run_ai     = o1.checkbox("🤖 AI Analysis",      value=True, help="GPT-4o summary")
-    run_reddit = o2.checkbox("💬 Reddit Sentiment",  value=True, help="Public RSS feed")
-    run_news   = o3.checkbox("📰 News Articles",     value=True, help="NewsAPI + yfinance fallback")
+    run_ai     = st.checkbox("🤖 AI Analysis",       value=True, help="GPT-4o investment summary")
+    run_reddit = st.checkbox("💬 Reddit Sentiment",   value=True, help="Public RSS feed, no auth needed")
+    run_news   = st.checkbox("📰 News Articles",      value=True, help="NewsAPI + yfinance fallback")
+
+with about_col:
+    st.markdown("#### ℹ️ About")
+    st.markdown("""
+- 📊 Price data & technicals via **yfinance**
+- 📰 News via **NewsAPI** + yfinance
+- 💬 Social via **Reddit** + **StockTwits**
+- 🏛️ Insider trades via **SEC EDGAR**
+- 🤖 AI analysis via **GPT-4o**
+""")
+    st.markdown("<small style='color:#9E9E9E'>✍️ @okelaloli &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; Jun 2026</small>", unsafe_allow_html=True)
 
 st.markdown("---")
 
-# ── About / feature strip ──────────────────────────────────────────────────────
-a1, a2, a3, a4, a5 = st.columns(5)
-a1.markdown("<div class='feature-box'>📊 <b>Price Charts</b><br>Candlestick · MA · Bollinger Bands</div>", unsafe_allow_html=True)
-a2.markdown("<div class='feature-box'>📉 <b>Technicals</b><br>RSI · MACD · ATR · Fibonacci</div>", unsafe_allow_html=True)
-a3.markdown("<div class='feature-box'>🗞️ <b>News & Social</b><br>Reddit · StockTwits · NewsAPI</div>", unsafe_allow_html=True)
-a4.markdown("<div class='feature-box'>🏛️ <b>Insider Trades</b><br>SEC Form 4 filings</div>", unsafe_allow_html=True)
-a5.markdown("<div class='feature-box'>🤖 <b>AI Analysis</b><br>GPT-4o investment summary</div>", unsafe_allow_html=True)
-
-st.markdown("")
 
 if analyze_btn:
     if not ticker_input:
