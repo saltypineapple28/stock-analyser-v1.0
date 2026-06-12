@@ -333,7 +333,7 @@ if "results" in st.session_state:
     st.markdown("**Moving Average Support**")
     bz1, bz2, bz3, bz4 = st.columns(4)
     def _mini(col, label, val):
-        col.markdown(f"<div style='font-size:0.75rem;color:#9E9E9E'>{label}</div><div style='font-size:1rem;font-weight:600'>{val}</div>", unsafe_allow_html=True)
+        col.markdown(f"<div style='font-size:0.75rem;color:#9E9E9E;margin-top:10px'>{label}</div><div style='font-size:1rem;font-weight:600;margin-bottom:14px'>{val}</div>", unsafe_allow_html=True)
     _mini(bz1, "MA 5 days",  _fmt(_ma(5)))
     _mini(bz2, "MA 10 days", _fmt(_ma(10)))
     _mini(bz3, "MA 30 days", _fmt(_ma(30)))

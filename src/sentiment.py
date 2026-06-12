@@ -156,6 +156,7 @@ def get_reddit_posts(ticker: str, company_name: str = "") -> list[dict]:
         except Exception:
             continue
 
+    posts.sort(key=lambda x: x.get("created_utc", ""), reverse=True)
     return posts[:30]
 
 
