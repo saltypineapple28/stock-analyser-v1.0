@@ -89,9 +89,10 @@ with st.sidebar:
 This tool collects:
 - **Price data** via yfinance
 - **News** via NewsAPI + yfinance
-- **Social** via Reddit + StockTwits
+- **Social** via Reddit + StockTwits + SEC Form 4 insider trades
+- **Technicals** via MA, Bollinger Bands, Fibonacci, ATR
 - **AI analysis** via GPT-4o
-- **PDF + CSV** export
+- **CSV** export
     """)
     st.markdown("---")
     st.markdown("<small>Configure API keys in `.env`</small>", unsafe_allow_html=True)
@@ -333,52 +334,54 @@ if "results" in st.session_state:
 
     st.markdown("**Moving Average Support**")
     bz1, bz2, bz3, bz4 = st.columns(4)
-    bz1.metric("MA 5 days",  _fmt(_ma(5)))
-    bz2.metric("MA 14 days", _fmt(_ma(14)))
-    bz3.metric("MA 30 days", _fmt(_ma(30)))
-    bz4.metric("MA 60 days", _fmt(_ma(60)))
+    def _mini(col, label, val):
+        col.markdown(f"<div style='font-size:0.75rem;color:#9E9E9E'>{label}</div><div style='font-size:1rem;font-weight:600'>{val}</div>", unsafe_allow_html=True)
+    _mini(bz1, "MA 5 days",  _fmt(_ma(5)))
+    _mini(bz2, "MA 10 days", _fmt(_ma(10)))
+    _mini(bz3, "MA 30 days", _fmt(_ma(30)))
+    _mini(bz4, "MA 60 days", _fmt(_ma(60)))
 
     st.markdown("**Bollinger Band & Fibonacci Retracement**")
     bb1, f1, f2, f3 = st.columns(4)
-    bb1.metric("BB Lower (2σ)", _fmt(bb_lower), help="20-day lower Bollinger Band — oversold zone")
-    f1.metric("Fib 38.2%", _fmt(fib.get("38.2%")), help="38.2% retracement from 60-day high")
-    f2.metric("Fib 50.0%", _fmt(fib.get("50.0%")), help="50% retracement — key support")
-    f3.metric("Fib 61.8%", _fmt(fib.get("61.8%")), help="Golden ratio retracement — strongest support")
+    _mini(bb1, "BB Lower (2σ)", _fmt(bb_lower))
+    _mini(f1,  "Fib 38.2%",    _fmt(fib.get("38.2%")))
+    _mini(f2,  "Fib 50.0%",    _fmt(fib.get("50.0%")))
+    _mini(f3,  "Fib 61.8%",    _fmt(fib.get("61.8%")))
 
     # ── Sell Target ───────────────────────────────────────────────────────────
     st.markdown("### 🔴 Sell Target")
 
     st.markdown("**Moving Average Resistance**")
     st1, st2, st3, st4 = st.columns(4)
-    st1.metric("MA 20 days",  _fmt(_ma(20)))
-    st2.metric("MA 50 days",  _fmt(_ma(50)))
-    st3.metric("MA 100 days", _fmt(_ma(100)))
-    st4.metric("MA 200 days", _fmt(_ma(200)))
+    _mini(st1, "MA 5 days",  _fmt(_ma(5)))
+    _mini(st2, "MA 10 days", _fmt(_ma(10)))
+    _mini(st3, "MA 30 days", _fmt(_ma(30)))
+    _mini(st4, "MA 60 days", _fmt(_ma(60)))
 
     st.markdown("**Bollinger Band & Fibonacci Extension**")
     bb2, fe1, fe2, an1 = st.columns(4)
-    bb2.metric("BB Upper (2σ)", _fmt(bb_upper), help="20-day upper Bollinger Band — overbought zone")
-    fe1.metric("Fib Ext 127.2%", _fmt(fib.get("Ext 127.2%")), help="127.2% extension — conservative target")
-    fe2.metric("Fib Ext 161.8%", _fmt(fib.get("Ext 161.8%")), help="161.8% golden ratio extension — strong target")
-    an1.metric("Analyst Target", _fmt(price_targets.get("analyst_mean_target")), help="Wall Street consensus")
+    _mini(bb2, "BB Upper (2σ)",   _fmt(bb_upper))
+    _mini(fe1, "Fib Ext 127.2%",  _fmt(fib.get("Ext 127.2%")))
+    _mini(fe2, "Fib Ext 161.8%",  _fmt(fib.get("Ext 161.8%")))
+    _mini(an1, "Analyst Target",  _fmt(price_targets.get("analyst_mean_target")))
 
     # ── Cut-Loss ──────────────────────────────────────────────────────────────
     st.markdown("### 🛑 Cut-Loss (Stop)")
 
     st.markdown("**Moving Average Stops**")
     cl1, cl2, cl3, cl4 = st.columns(4)
-    cl1.metric("MA 5 days",  _fmt(_ma(5)))
-    cl2.metric("MA 10 days", _fmt(_ma(10)))
-    cl3.metric("MA 20 days", _fmt(_ma(20)))
-    cl4.metric("MA 50 days", _fmt(_ma(50)))
+    _mini(cl1, "MA 5 days",  _fmt(_ma(5)))
+    _mini(cl2, "MA 10 days", _fmt(_ma(10)))
+    _mini(cl3, "MA 30 days", _fmt(_ma(30)))
+    _mini(cl4, "MA 60 days", _fmt(_ma(60)))
 
     st.markdown("**ATR & Bollinger Band Stops**")
     atr1, atr2, atr3, _ = st.columns(4)
     atr_1x = round(price_targets["current_price"] - 1.5 * atr, 2) if atr and price_targets.get("current_price") else None
     atr_2x = round(price_targets["current_price"] - 2.0 * atr, 2) if atr and price_targets.get("current_price") else None
-    atr1.metric("ATR 1.5×", _fmt(atr_1x), help=f"Current price minus 1.5× ATR (${atr})")
-    atr2.metric("ATR 2.0×", _fmt(atr_2x), help=f"Current price minus 2× ATR (${atr})")
-    atr3.metric("BB Lower (2σ)", _fmt(bb_lower), help="Close below lower band = exit signal")
+    _mini(atr1, "ATR 1.5×",     _fmt(atr_1x))
+    _mini(atr2, "ATR 2.0×",     _fmt(atr_2x))
+    _mini(atr3, "BB Lower (2σ)", _fmt(bb_lower))
 
     # ── Download buttons ──────────────────────────────────────────────────────
     st.markdown("---")
@@ -553,6 +556,35 @@ if "results" in st.session_state:
         else:
             st.info("No news articles available. Add a NewsAPI key to .env for full news coverage.")
 
+        # ── Insider Trades (SEC Form 4) ────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("### 💼 Insider Trades (SEC Form 4)")
+        if insider_trades:
+            for trade in insider_trades:
+                txn_type = trade.get("type", "")
+                color = "green" if txn_type == "Purchase" else "red" if txn_type == "Sale" else "orange"
+                shares = trade.get("shares", "N/A")
+                price  = trade.get("price", "N/A")
+                value  = trade.get("value")
+                value_str = f" ≈ ${value:,.0f}" if value else ""
+                try:
+                    shares_fmt = f"{float(shares):,.0f}"
+                except Exception:
+                    shares_fmt = shares
+                try:
+                    price_fmt = f"${float(price):,.2f}"
+                except Exception:
+                    price_fmt = price
+                st.markdown(
+                    f"**[{trade.get('insider','Unknown')}]({trade.get('url','#')})** "
+                    f"— {trade.get('title','')}  \n"
+                    f":{color}[{txn_type}] &nbsp; {shares_fmt} shares @ {price_fmt}{value_str} "
+                    f"— *{trade.get('date','')}*"
+                )
+                st.markdown("---")
+        else:
+            st.info("No insider trades found or SEC EDGAR unavailable.")
+
     # ── Tab: Social ───────────────────────────────────────────────────────────
     with tab_social:
         r_col, st_col = st.columns(2)
@@ -571,7 +603,7 @@ if "results" in st.session_state:
                     )
                     st.markdown("---")
             else:
-                st.info("Reddit not configured. Add REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET to .env.")
+                st.info("No Reddit posts retrieved. Reddit may be blocked by your network/proxy — it works on Streamlit Cloud.")
 
         with st_col:
             st.markdown("### StockTwits")
@@ -588,34 +620,6 @@ if "results" in st.session_state:
             else:
                 st.info("No StockTwits messages retrieved for this ticker.")
 
-    # ── Insider Trades (SEC Form 4) ────────────────────────────────────────────────
-    st.markdown("---")
-    st.markdown("### 💼 Insider Trades (SEC Form 4)")
-    if insider_trades:
-        for trade in insider_trades:
-            txn_type = trade.get("type", "")
-            color = "green" if txn_type == "Purchase" else "red" if txn_type == "Sale" else "orange"
-            shares = trade.get("shares", "N/A")
-            price  = trade.get("price", "N/A")
-            value  = trade.get("value")
-            value_str = f" ≈ ${value:,.0f}" if value else ""
-            try:
-                shares_fmt = f"{float(shares):,.0f}"
-            except Exception:
-                shares_fmt = shares
-            try:
-                price_fmt = f"${float(price):,.2f}"
-            except Exception:
-                price_fmt = price
-            st.markdown(
-                f"**[{trade.get('insider','Unknown')}]({trade.get('url','#')})** "
-                f"— {trade.get('title','')}  \n"
-                f":{color}[{txn_type}] &nbsp; {shares_fmt} shares @ {price_fmt}{value_str} "
-                f"— *{trade.get('date','')}*"
-            )
-            st.markdown("---")
-    else:
-        st.info("No insider trades found or SEC EDGAR unavailable.")
 
 else:
     # ── Empty state ────────────────────────────────────────────────────────────
