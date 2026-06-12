@@ -71,11 +71,6 @@ Please provide:
 2. **Investment Thesis** (why this might be a good or bad investment)
 3. **Key Risks** (3-5 bullet points)
 4. **Overall Recommendation** (Strong Buy / Buy / Hold / Sell / Strong Sell) with a one-paragraph justification
-5. **Price Targets**:
-   - Suggested Buy Price: {price_targets.get('buy_price', 'N/A')}
-   - Suggested Sell / Target Price: {price_targets.get('sell_price', 'N/A')}
-   - Suggested Cut-Loss Price: {price_targets.get('cut_loss_price', 'N/A')}
-   Confirm or adjust these based on your analysis and briefly explain your reasoning.
 
 Keep the tone professional and data-driven. Limit total response to ~600 words.
 """
@@ -159,10 +154,4 @@ The stock's technical indicators suggest a {signal.lower()} momentum phase. Mark
 
 ## Overall Recommendation: {consensus}
 Based on the combination of technical signals ({signal}), analyst consensus ({consensus}), and market sentiment ({sentiment}), a **{consensus}** stance is appropriate at current levels.
-
-## Price Targets
-- **Current Price:** ${current}
-- **Suggested Buy Price:** ${buy_p}
-- **Suggested Sell / Target Price:** ${sell_p}
-- **Suggested Cut-Loss Price:** ${cut_p}
 """
