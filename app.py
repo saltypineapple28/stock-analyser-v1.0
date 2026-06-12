@@ -418,7 +418,7 @@ if "results" in st.session_state:
                                          "RSI", "MACD", "MACD_signal",
                                          "BB_upper", "BB_lower", "ATR"]
                             if c in df.columns]
-            st.dataframe(df[cols_to_show].tail(30).round(3), use_container_width=True)
+            st.dataframe(df[cols_to_show].tail(30).sort_index(ascending=False).round(3), use_container_width=True)
 
     # ── Tab: Fundamentals ─────────────────────────────────────────────────────
     with tab_funds:
