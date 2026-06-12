@@ -7,7 +7,6 @@ Run with: streamlit run app.py
 import os
 import sys
 import datetime
-import traceback
 import pandas as pd
 import streamlit as st
 from pathlib import Path
@@ -27,9 +26,8 @@ from sentiment import (
 from ai_summary import generate_ai_analysis
 from charts import (
     price_chart, macd_chart, rsi_chart,
-    sentiment_bar_chart, analyst_donut_chart, figure_to_png_bytes,
+    sentiment_bar_chart, analyst_donut_chart,
 )
-from pdf_report import build_pdf_report
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -212,24 +210,6 @@ if analyze_btn:
     financials_df = build_financials_csv(data)
     csv_bytes = financials_df.to_csv().encode("utf-8") if not financials_df.empty else b"No financial data available"
 
-    # ── Step 10: PDF ──────────────────────────────────────────────────────────
-    update_status("Building PDF report…", 96)
-    try:
-        pdf_bytes = build_pdf_report(
-            ticker=ticker_input, info=info, price_targets=price_targets,
-            technical_signal=technical_signal, sentiment_summary=sentiment_summary,
-            analyst_consensus=analyst_consensus, ai_analysis_text=ai_text,
-            news_scored=news_scored, reddit_posts=reddit_posts,
-            stocktwits_scored=stocktwits_scored,
-            chart_price_png=None, chart_macd_png=None,
-            chart_rsi_png=None, chart_sentiment_png=None,
-            chart_analyst_png=None,
-        )
-        pdf_ok = True
-    except Exception as e:
-        pdf_ok = False
-        pdf_error = traceback.format_exc()
-
     update_status("✅ Analysis complete!", 100)
     progress_bar.empty()
     status_box.empty()
@@ -259,22 +239,10 @@ if analyze_btn:
 
     # ── Download buttons ──────────────────────────────────────────────────────
     st.markdown("---")
-    dl1, dl2, dl3 = st.columns([2, 2, 6])
-
-    if pdf_ok:
-        fname_pdf = f"{ticker_input}_analysis_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
-        dl1.download_button(
-            label="⬇ Download PDF Report",
-            data=pdf_bytes,
-            file_name=fname_pdf,
-            mime="application/pdf",
-            use_container_width=True,
-        )
-    else:
-        dl1.error("PDF generation failed")
+    dl1, dl2 = st.columns([2, 8])
 
     fname_csv = f"{ticker_input}_financials_{datetime.datetime.now().strftime('%Y%m%d')}.csv"
-    dl2.download_button(
+    dl1.download_button(
         label="⬇ Download CSV Data",
         data=csv_bytes,
         file_name=fname_csv,
@@ -464,10 +432,6 @@ if analyze_btn:
                     st.markdown("---")
             else:
                 st.info("No StockTwits messages retrieved for this ticker.")
-
-    if not pdf_ok:
-        with st.expander("PDF generation error details"):
-            st.code(pdf_error)
 
 else:
     # ── Empty state ────────────────────────────────────────────────────────────
