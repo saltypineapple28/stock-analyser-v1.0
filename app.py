@@ -509,10 +509,10 @@ if "results" in st.session_state:
             st.metric("Cut-Loss (Stop)", f"${price_targets.get('cut_loss_price', 'N/A')}",
                       help=f"Based on 2× ATR (${price_targets.get('atr', 'N/A')})")
             st.markdown("**Buy Zone (MA Support)**")
-            st.metric("MA 5d",  _ma_display(5))
-            st.metric("MA 14d", _ma_display(14))
-            st.metric("MA 30d", _ma_display(30))
-            st.metric("MA 60d", _ma_display(60)) 
+            st.metric("MA 5d",  _fmt(_ma(5)))
+            st.metric("MA 14d", _fmt(_ma(14)))
+            st.metric("MA 30d", _fmt(_ma(30)))
+            st.metric("MA 60d", _fmt(_ma(60)))
 
     # ── Tab: AI Analysis ──────────────────────────────────────────────────────
     with tab_ai:
