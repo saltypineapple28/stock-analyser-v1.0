@@ -96,17 +96,26 @@ def get_reddit_posts(ticker: str, company_name: str = "") -> list[dict]:
         return []
 
     try:
-        # Use a requestor with SSL verification disabled for corporate proxies
-        import prawcore
-        _session = requests.Session()
-        _session.verify = False
-        requestor = prawcore.Requestor(REDDIT_USER_AGENT, session=_session)
-        reddit = praw.Reddit(
-            client_id=REDDIT_CLIENT_ID,
-            client_secret=REDDIT_CLIENT_SECRET,
-            user_agent=REDDIT_USER_AGENT,
-            requestor=requestor,
-        )
+        # On corporate proxy, use a custom session with SSL verification disabled.
+        # On Streamlit Cloud (CORPORATE_PROXY not set), use default PRAW session.
+        use_proxy = os.getenv("CORPORATE_PROXY", "false").lower() == "true"
+        if use_proxy:
+            import prawcore
+            _session = requests.Session()
+            _session.verify = False
+            requestor = prawcore.Requestor(REDDIT_USER_AGENT, session=_session)
+            reddit = praw.Reddit(
+                client_id=REDDIT_CLIENT_ID,
+                client_secret=REDDIT_CLIENT_SECRET,
+                user_agent=REDDIT_USER_AGENT,
+                requestor=requestor,
+            )
+        else:
+            reddit = praw.Reddit(
+                client_id=REDDIT_CLIENT_ID,
+                client_secret=REDDIT_CLIENT_SECRET,
+                user_agent=REDDIT_USER_AGENT,
+            )
         posts = []
         query = f"{ticker} {company_name}".strip()
         for subreddit_name in SUBREDDITS:

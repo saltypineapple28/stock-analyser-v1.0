@@ -14,34 +14,42 @@ import yfinance as yf
 import pandas as pd
 from dotenv import load_dotenv
 
-# Disable SSL verification warnings (corporate proxy / self-signed cert environments)
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# On Streamlit Cloud (no corporate proxy) use the default session.
+# Locally set CORPORATE_PROXY=true in .env to enable SSL bypass.
+_USE_PROXY_SESSION = os.getenv("CORPORATE_PROXY", "false").lower() == "true"
 
-# Shared requests session: SSL disabled + retry on rate-limit / transient errors
-_SESSION = requests.Session()
-_SESSION.verify = False
+if _USE_PROXY_SESSION:
+    # Disable SSL verification warnings (corporate proxy / self-signed cert environments)
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Retry up to 5 times with exponential backoff on 429 / 5xx responses
-_RETRY = Retry(
-    total=5,
-    backoff_factor=2,          # waits 2, 4, 8, 16, 32 s between retries
-    status_forcelist=[429, 500, 502, 503, 504],
-    allowed_methods=["GET", "HEAD", "OPTIONS"],
-    raise_on_status=False,
-)
-_ADAPTER = HTTPAdapter(max_retries=_RETRY)
-_SESSION.mount("https://", _ADAPTER)
-_SESSION.mount("http://", _ADAPTER)
+    # Shared requests session: SSL disabled + retry on rate-limit / transient errors
+    _SESSION = requests.Session()
+    _SESSION.verify = False
 
-# Mimic a real browser to avoid Yahoo Finance bot-detection
-_SESSION.headers.update({
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/125.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "en-US,en;q=0.9",
-})
+    # Retry up to 5 times with exponential backoff on 429 / 5xx responses
+    _RETRY = Retry(
+        total=5,
+        backoff_factor=2,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET", "HEAD", "OPTIONS"],
+        raise_on_status=False,
+    )
+    _ADAPTER = HTTPAdapter(max_retries=_RETRY)
+    _SESSION.mount("https://", _ADAPTER)
+    _SESSION.mount("http://", _ADAPTER)
+
+    # Mimic a real browser to avoid Yahoo Finance bot-detection
+    _SESSION.headers.update({
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "Accept-Language": "en-US,en;q=0.9",
+    })
+else:
+    # Cloud / standard environment: use yfinance's default session
+    _SESSION = None
 
 load_dotenv()
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
@@ -52,7 +60,7 @@ def _yf_ticker(ticker: str) -> yf.Ticker:
     last_exc = None
     for attempt in range(3):
         try:
-            t = yf.Ticker(ticker, session=_SESSION)
+            t = yf.Ticker(ticker, session=_SESSION) if _SESSION else yf.Ticker(ticker)
             _ = t.fast_info
             return t
         except Exception as e:
@@ -61,11 +69,11 @@ def _yf_ticker(ticker: str) -> yf.Ticker:
             if "429" in err or "Too Many Requests" in err or "Rate" in err:
                 time.sleep((attempt + 1) * 5)
             elif "SSL" in err or "certificate" in err or "curl" in err:
-                time.sleep(2)  # brief wait then retry with same session
+                time.sleep(2)
             else:
-                break  # non-retryable error
+                break
     # Final attempt — no fast_info check, just return the ticker
-    return yf.Ticker(ticker, session=_SESSION)
+    return yf.Ticker(ticker, session=_SESSION) if _SESSION else yf.Ticker(ticker)
 
 
 def get_stock_data(ticker: str) -> dict:
