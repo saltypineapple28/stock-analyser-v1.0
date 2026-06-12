@@ -17,7 +17,10 @@ def compute_indicators(history: pd.DataFrame) -> pd.DataFrame:
     volume = df["Volume"]
 
     # --- Moving Averages ---
+    df["MA5"]  = close.rolling(5).mean()
+    df["MA14"] = close.rolling(14).mean()
     df["MA20"] = close.rolling(20).mean()
+    df["MA30"] = close.rolling(30).mean()
     df["MA50"] = close.rolling(50).mean()
     df["MA60"] = close.rolling(60).mean()
     df["MA200"] = close.rolling(200).mean()
@@ -128,6 +131,10 @@ def derive_price_targets(df: pd.DataFrame, analyst_targets: dict, info: dict) ->
     return {
         "current_price": round(latest, 2) if latest else None,
         "buy_price": buy_price,
+        "buy_zone_ma5":  buy_zone_ma5,
+        "buy_zone_ma14": buy_zone_ma14,
+        "buy_zone_ma30": buy_zone_ma30,
+        "buy_zone_ma60": buy_zone_ma60,
         "sell_price": sell_price,
         "cut_loss_price": cut_loss_price,
         "analyst_mean_target": round(float(analyst_mean), 2) if analyst_mean else None,
