@@ -85,6 +85,8 @@ with st.sidebar:
 
     analyze_btn = st.button("🔍 Analyze Stock", use_container_width=True)
 
+    analyze_btn = st.button("🔍 Analyze Stock", use_container_width=True)
+
     st.markdown("---")
     st.markdown("#### About")
     st.markdown("""
@@ -97,6 +99,14 @@ This tool collects:
     """)
     st.markdown("---")
     st.markdown("<small>Configure API keys in `.env`</small>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("""
+<div style='font-size:0.75rem; color:#9E9E9E; line-height:1.8;'>
+    <b>Author:</b> @okelaloli<br>
+    <b>Version:</b> 1.0<br>
+    <b>Published:</b> 12/06/2026
+</div>
+""", unsafe_allow_html=True)
 
 
 # ── Main area ──────────────────────────────────────────────────────────────────
