@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from data_collector import (
     get_stock_data, get_news_articles, get_stocktwits_sentiment,
-    get_analyst_summary, build_financials_csv,
+    get_analyst_summary, build_financials_csv, get_insider_trades,
 )
 from technical import compute_indicators, derive_price_targets, get_technical_signal
 from sentiment import (
@@ -205,10 +205,14 @@ if analyze_btn:
     fig_analyst = analyst_donut_chart(analyst_consensus)
     update_status("✓ Charts rendered", 90)
 
-    # ── Step 9: CSV ───────────────────────────────────────────────────────────
-    update_status("Preparing exports…", 93)
+    # ── Step 9: CSV + Insider Trades ───────────────────────────────────────────────────────
+    update_status("Preparing exports…", 90)
     financials_df = build_financials_csv(data)
     csv_bytes = financials_df.to_csv().encode("utf-8") if not financials_df.empty else b"No financial data available"
+
+    update_status("Fetching insider trades (SEC EDGAR)…", 95)
+    insider_trades = get_insider_trades(ticker_input)
+    update_status(f"✓ {len(insider_trades)} insider transactions found", 97)
 
     update_status("✅ Analysis complete!", 100)
     progress_bar.empty()
@@ -228,6 +232,7 @@ if analyze_btn:
         "news_scored": news_scored,
         "reddit_posts": reddit_posts,
         "stocktwits_scored": stocktwits_scored,
+        "insider_trades": insider_trades,
         "financials_df": financials_df,
         "csv_bytes": csv_bytes,
         "fig_price": fig_price,
@@ -251,6 +256,7 @@ if "results" in st.session_state:
     news_scored       = _r["news_scored"]
     reddit_posts      = _r["reddit_posts"]
     stocktwits_scored = _r["stocktwits_scored"]
+    insider_trades    = _r.get("insider_trades", [])
     financials_df     = _r["financials_df"]
     csv_bytes         = _r["csv_bytes"]
     fig_price         = _r["fig_price"]
@@ -581,6 +587,35 @@ if "results" in st.session_state:
                     st.markdown("---")
             else:
                 st.info("No StockTwits messages retrieved for this ticker.")
+
+    # ── Insider Trades (SEC Form 4) ────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("### 💼 Insider Trades (SEC Form 4)")
+    if insider_trades:
+        for trade in insider_trades:
+            txn_type = trade.get("type", "")
+            color = "green" if txn_type == "Purchase" else "red" if txn_type == "Sale" else "orange"
+            shares = trade.get("shares", "N/A")
+            price  = trade.get("price", "N/A")
+            value  = trade.get("value")
+            value_str = f" ≈ ${value:,.0f}" if value else ""
+            try:
+                shares_fmt = f"{float(shares):,.0f}"
+            except Exception:
+                shares_fmt = shares
+            try:
+                price_fmt = f"${float(price):,.2f}"
+            except Exception:
+                price_fmt = price
+            st.markdown(
+                f"**[{trade.get('insider','Unknown')}]({trade.get('url','#')})** "
+                f"— {trade.get('title','')}  \n"
+                f":{color}[{txn_type}] &nbsp; {shares_fmt} shares @ {price_fmt}{value_str} "
+                f"— *{trade.get('date','')}*"
+            )
+            st.markdown("---")
+    else:
+        st.info("No insider trades found or SEC EDGAR unavailable.")
 
 else:
     # ── Empty state ────────────────────────────────────────────────────────────
