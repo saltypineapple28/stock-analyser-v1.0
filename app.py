@@ -595,8 +595,7 @@ if "results" in st.session_state:
                     color = "green" if label == "Positive" else "red" if label == "Negative" else "orange"
                     st.markdown(
                         f"**[{post.get('title', '')[:80]}]({post.get('url', '#')})**  \n"
-                        f"r/{post.get('subreddit','')} · ↑{post.get('score',0)} · "
-                        f"{post.get('num_comments',0)} comments · {post.get('created_utc','')}  \n"
+                        f"r/{post.get('subreddit','')} · {post.get('created_utc','')}  \n"
                         f":{color}[{label} ({post.get('sentiment_score',0):.2f})]"
                     )
                     st.markdown("---")
