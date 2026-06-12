@@ -267,29 +267,19 @@ if "results" in st.session_state:
     # ── Key metrics row ───────────────────────────────────────────────────────
     st.markdown("---")
 
-    _bz_options = {"5 days (short-term)": "buy_zone_ma5", "14 days": "buy_zone_ma14",
-                   "30 days": "buy_zone_ma30", "60 days (medium-term)": "buy_zone_ma60"}
-    _bz_keys = list(_bz_options.keys())
-    _bz_default = st.session_state.get("bz_select", "60 days (medium-term)")
-    _bz_default_idx = _bz_keys.index(_bz_default) if _bz_default in _bz_keys else 3
-    _bz_label = st.selectbox(
-        "Buy Zone based on moving average:",
-        _bz_keys,
-        index=_bz_default_idx,
-        key="bz_select",
-    )
-    _bz_val = price_targets.get(_bz_options[_bz_label]) or price_targets.get("buy_price", "N/A")
-    _bz_display = f"${_bz_val}" if _bz_val else "N/A"
-
-    m1, m2, m3, m4, m5, m6 = st.columns(6)
+    m1, m2, m3, m4, m5 = st.columns(5)
     m1.metric("Current Price", f"${price_targets.get('current_price', 'N/A')}")
-    m2.metric("Buy Zone", _bz_display, delta=_bz_label)
-    m3.metric("Sell Target", f"${price_targets.get('sell_price', 'N/A')}", delta="Exit",
-              delta_color="normal")
-    m4.metric("Cut-Loss", f"${price_targets.get('cut_loss_price', 'N/A')}", delta="Stop-loss",
-              delta_color="inverse")
-    m5.metric("Technical", technical_signal.get("overall", "N/A"))
-    m6.metric("Sentiment", sentiment_summary.get("overall_label", "N/A"))
+    m2.metric("Sell Target",   f"${price_targets.get('sell_price', 'N/A')}", delta="Exit", delta_color="normal")
+    m3.metric("Cut-Loss",      f"${price_targets.get('cut_loss_price', 'N/A')}", delta="Stop-loss", delta_color="inverse")
+    m4.metric("Technical",     technical_signal.get("overall", "N/A"))
+    m5.metric("Sentiment",     sentiment_summary.get("overall_label", "N/A"))
+
+    st.markdown("**Buy Zone — Moving Average Support Levels**")
+    bz1, bz2, bz3, bz4 = st.columns(4)
+    bz1.metric("MA 5 days",  f"${price_targets.get('buy_zone_ma5',  'N/A')}")
+    bz2.metric("MA 14 days", f"${price_targets.get('buy_zone_ma14', 'N/A')}")
+    bz3.metric("MA 30 days", f"${price_targets.get('buy_zone_ma30', 'N/A')}")
+    bz4.metric("MA 60 days", f"${price_targets.get('buy_zone_ma60', 'N/A')}")
 
     # ── Download buttons ──────────────────────────────────────────────────────
     st.markdown("---")
@@ -422,14 +412,14 @@ if "results" in st.session_state:
             st.metric("Analyst High", f"${price_targets.get('analyst_high_target', 'N/A')}")
             st.markdown("---")
             st.markdown("**Recommended Price Levels**")
-            bz_opts = {"MA 5 days": "buy_zone_ma5", "MA 14 days": "buy_zone_ma14",
-                       "MA 30 days": "buy_zone_ma30", "MA 60 days": "buy_zone_ma60"}
-            bz_pick = st.selectbox("Buy Zone MA:", list(bz_opts.keys()), index=3, key="bz_tab")
-            bz_v = price_targets.get(bz_opts[bz_pick])
-            st.metric("Buy Zone", f"${bz_v}" if bz_v else "N/A", help=bz_pick)
             st.metric("Sell / Target", f"${price_targets.get('sell_price', 'N/A')}")
             st.metric("Cut-Loss (Stop)", f"${price_targets.get('cut_loss_price', 'N/A')}",
-                      help=f"Based on 2× ATR (${price_targets.get('atr', 'N/A')})") 
+                      help=f"Based on 2× ATR (${price_targets.get('atr', 'N/A')})")
+            st.markdown("**Buy Zone (MA Support)**")
+            st.metric("MA 5d",  f"${price_targets.get('buy_zone_ma5',  'N/A')}")
+            st.metric("MA 14d", f"${price_targets.get('buy_zone_ma14', 'N/A')}")
+            st.metric("MA 30d", f"${price_targets.get('buy_zone_ma30', 'N/A')}")
+            st.metric("MA 60d", f"${price_targets.get('buy_zone_ma60', 'N/A')}") 
 
     # ── Tab: AI Analysis ──────────────────────────────────────────────────────
     with tab_ai:
