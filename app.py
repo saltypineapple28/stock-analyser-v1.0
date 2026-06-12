@@ -269,13 +269,16 @@ if "results" in st.session_state:
 
     _bz_options = {"5 days (short-term)": "buy_zone_ma5", "14 days": "buy_zone_ma14",
                    "30 days": "buy_zone_ma30", "60 days (medium-term)": "buy_zone_ma60"}
+    _bz_keys = list(_bz_options.keys())
+    _bz_default = st.session_state.get("bz_select", "60 days (medium-term)")
+    _bz_default_idx = _bz_keys.index(_bz_default) if _bz_default in _bz_keys else 3
     _bz_label = st.selectbox(
         "Buy Zone based on moving average:",
-        list(_bz_options.keys()),
-        index=3,
+        _bz_keys,
+        index=_bz_default_idx,
         key="bz_select",
     )
-    _bz_val = price_targets.get(_bz_options[_bz_label], price_targets.get("buy_price", "N/A"))
+    _bz_val = price_targets.get(_bz_options[_bz_label]) or price_targets.get("buy_price", "N/A")
     _bz_display = f"${_bz_val}" if _bz_val else "N/A"
 
     m1, m2, m3, m4, m5, m6 = st.columns(6)
