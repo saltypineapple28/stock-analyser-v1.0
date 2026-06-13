@@ -107,7 +107,7 @@ with about_col:
 - Insider trades via **SEC EDGAR** Form 4
 - AI analysis via **GPT-4o**
 """)
-    st.markdown("<small style='color:#9E9E9E'>✍️ 😘 from Linnie &nbsp;·&nbsp; @okelaloli &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; Jun 2026</small>", unsafe_allow_html=True)
+    st.markdown("<small style='color:#9E9E9E'>✍️ from Linnie with 😘 &nbsp;·&nbsp; @okelaloli &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; Jun 2026</small>", unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -580,24 +580,17 @@ if "results" in st.session_state:
             if _ud is not None and isinstance(_ud, pd.DataFrame) and not _ud.empty:
                 _ud = _ud.reset_index()
                 _ud.columns = [c.strip() for c in _ud.columns]
-                with st.expander("🔍 debug – raw columns", expanded=True):
-                    st.write("Columns:", list(_ud.columns))
-                    st.write(_ud.head(3))
-                date_col  = next((c for c in _ud.columns if "date" in c.lower()), None)
-                firm_col  = next((c for c in _ud.columns if "firm" in c.lower()), None)
-                grade_col = next((c for c in _ud.columns if "tograde" in c.lower().replace(" ","") or c.lower() == "to grade"), None)
-                if firm_col and grade_col:
-                    disp_cols = [c for c in [date_col, firm_col, grade_col] if c]
-                    _ud_show = _ud[disp_cols].copy()
-                    if date_col:
-                        _ud_show[date_col] = pd.to_datetime(_ud_show[date_col]).dt.strftime("%Y-%m-%d")
-                        _ud_show = _ud_show.sort_values(date_col, ascending=False)
-                    _ud_show.columns = [c.title() for c in _ud_show.columns]
-                    st.dataframe(_ud_show.head(25), use_container_width=True, hide_index=True)
-                else:
-                    st.write("firm_col:", firm_col, "grade_col:", grade_col)
-            else:
-                st.write("_upgrades is:", type(_ud), "empty:", _ud.empty if isinstance(_ud, pd.DataFrame) else "N/A")
+                _keep = [c for c in ["GradeDate","Firm","ToGrade","FromGrade","Action","priceTargetAction","currentPriceTarget","priorPriceTarget"] if c in _ud.columns]
+                _ud_show = _ud[_keep].copy()
+                if "GradeDate" in _ud_show.columns:
+                    _ud_show["GradeDate"] = pd.to_datetime(_ud_show["GradeDate"]).dt.strftime("%Y-%m-%d")
+                    _ud_show = _ud_show.sort_values("GradeDate", ascending=False)
+                _ud_show = _ud_show.rename(columns={
+                    "GradeDate": "Date", "ToGrade": "Rating", "FromGrade": "From",
+                    "priceTargetAction": "PT Action",
+                    "currentPriceTarget": "Current PT", "priorPriceTarget": "Prior PT",
+                })
+                st.dataframe(_ud_show.head(30), use_container_width=True, hide_index=True)
         with c2:
             st.markdown(
                 "<span style='font-size:1rem;font-weight:600'>Price Targets</span> "
