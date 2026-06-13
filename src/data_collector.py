@@ -331,113 +331,66 @@ def build_financials_csv(data: dict) -> pd.DataFrame:
 
 def get_insider_trades(ticker: str) -> list[dict]:
     """
-    Fetch recent Form 4 insider trades from SEC EDGAR.
-    No credentials required — uses the public EDGAR API.
-    Returns list of dicts with insider name, title, buy/sell, shares, price, date.
+    Fetch recent insider trades via yfinance (insider_transactions).
+    Returns list of dicts with insider name, title, type, shares, price, value, date.
     """
-    verify = False if _USE_PROXY_SESSION else True
-    headers = {
-        "User-Agent": "StockAnalyzer research@stockanalyzer.com",
-        "Accept-Encoding": "gzip, deflate",
-    }
-    trades = []
-
     try:
-        # Step 1: Resolve CIK from ticker via EDGAR company atom feed
-        atom_url = (
-            "https://www.sec.gov/cgi-bin/browse-edgar"
-            f"?action=getcompany&company=&CIK={ticker}"
-            "&type=4&dateb=&owner=include&count=0&output=atom"
-        )
-        r = requests.get(atom_url, headers=headers, timeout=15, verify=verify)
-        if r.status_code != 200:
+        t = _make_ticker(ticker)
+        df = t.insider_transactions
+        if df is None or (isinstance(df, pd.DataFrame) and df.empty):
             return []
 
-        root = ET.fromstring(r.content)
-        cik_el = root.find(".//{http://www.sec.gov/cgi-bin/browse-edgar}cik")
-        if cik_el is None:
-            return []
-        cik = cik_el.text.strip().lstrip("0")
+        df = df.reset_index(drop=True)
+        trades = []
+        for _, row in df.iterrows():
+            # normalise column names (yfinance may vary by version)
+            def _g(keys):
+                for k in keys:
+                    for col in df.columns:
+                        if col.lower().replace(" ", "") == k.lower().replace(" ", ""):
+                            v = row.get(col)
+                            if v is not None and str(v) not in ("nan", "None", ""):
+                                return v
+                return ""
 
-        # Step 2: Get recent filings from EDGAR submissions API
-        cik_padded = cik.zfill(10)
-        sub_url = f"https://data.sec.gov/submissions/CIK{cik_padded}.json"
-        r2 = requests.get(sub_url, headers=headers, timeout=15, verify=verify)
-        if r2.status_code != 200:
-            return []
+            shares = _g(["shares", "sharesTraded"])
+            price  = _g(["value", "startPrice", "price"])
+            txn_type = str(_g(["transaction", "transactionType", "type"]))
+            date_val = _g(["startDate", "date", "transactionDate"])
+            insider  = str(_g(["insider", "insiderName", "name"]))
+            title    = str(_g(["position", "title", "officerTitle"]))
+            url      = str(_g(["url", "filingUrl"]))
 
-        filings = r2.json().get("filings", {}).get("recent", {})
-        forms       = filings.get("form", [])
-        dates       = filings.get("filingDate", [])
-        accessions  = filings.get("accessionNumber", [])
-        docs        = filings.get("primaryDocument", [])
-
-        # Take up to 15 most recent Form 4 filings
-        form4_idx = [i for i, f in enumerate(forms) if f == "4"][:15]
-
-        for idx in form4_idx:
-            acc_no_dash = accessions[idx].replace("-", "")
-            primary_doc = docs[idx]
-            filing_date = dates[idx]
-
-            xml_url = (
-                f"https://www.sec.gov/Archives/edgar/data/{cik}"
-                f"/{acc_no_dash}/{primary_doc}"
-            )
             try:
-                xr = requests.get(xml_url, headers=headers, timeout=10, verify=verify)
-                if xr.status_code != 200:
-                    continue
-                xroot = ET.fromstring(xr.content)
-
-                # Insider name and title
-                owner_name, owner_title = "", ""
-                for el in xroot.iter("rptOwnerName"):
-                    owner_name = (el.text or "").strip()
-                    break
-                for rel in xroot.iter("reportingOwnerRelationship"):
-                    t_el = rel.find("officerTitle")
-                    if t_el is not None and t_el.text:
-                        owner_title = t_el.text.strip()
-                    elif (rel.findtext("isDirector") or "") == "1":
-                        owner_title = "Director"
-                    elif (rel.findtext("isOfficer") or "") == "1":
-                        owner_title = "Officer"
-                    break
-
-                # Non-derivative (stock) transactions
-                for txn in xroot.iter("nonDerivativeTransaction"):
-                    code = (txn.findtext(".//transactionCode") or "").strip()
-                    txn_type = ("Purchase" if code == "P"
-                                else "Sale" if code == "S"
-                                else code if code else "Other")
-                    shares_raw = txn.findtext(".//transactionShares/value") or ""
-                    price_raw  = txn.findtext(".//transactionPricePerShare/value") or ""
-                    txn_date   = txn.findtext(".//transactionDate/value") or filing_date
-                    security   = txn.findtext(".//securityTitle/value") or "Common Stock"
-                    try:
-                        value = round(float(shares_raw) * float(price_raw))
-                    except Exception:
-                        value = None
-                    trades.append({
-                        "insider":  owner_name,
-                        "title":    owner_title,
-                        "type":     txn_type,
-                        "shares":   shares_raw,
-                        "price":    price_raw,
-                        "value":    value,
-                        "date":     txn_date,
-                        "security": security,
-                        "url": (
-                            f"https://www.sec.gov/Archives/edgar/data"
-                            f"/{cik}/{acc_no_dash}/{primary_doc}"
-                        ),
-                    })
+                shares_f = float(shares)
             except Exception:
-                continue
+                shares_f = None
+            try:
+                price_f = float(price)
+            except Exception:
+                price_f = None
 
+            value = round(shares_f * price_f) if shares_f and price_f else None
+
+            date_str = ""
+            if hasattr(date_val, "strftime"):
+                date_str = date_val.strftime("%Y-%m-%d")
+            elif date_val:
+                date_str = str(date_val)[:10]
+
+            trades.append({
+                "insider":  insider,
+                "title":    title,
+                "type":     txn_type,
+                "shares":   str(int(shares_f)) if shares_f else str(shares),
+                "price":    f"{price_f:.2f}" if price_f else str(price),
+                "value":    value,
+                "date":     date_str,
+                "security": "Common Stock",
+                "url":      url,
+            })
+
+        trades.sort(key=lambda x: x.get("date", ""), reverse=True)
+        return trades[:25]
     except Exception:
         return []
-
-    trades.sort(key=lambda x: x.get("date", ""), reverse=True)
-    return trades[:25]
