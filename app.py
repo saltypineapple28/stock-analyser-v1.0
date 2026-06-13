@@ -56,7 +56,11 @@ st.markdown("""
     .signal-bullish {color: #2E7D32; font-weight: 700;}
     .signal-bearish {color: #C62828; font-weight: 700;}
     .signal-neutral {color: #F57F17; font-weight: 700;}
-    div[data-testid="stProgress"] > div {background-color: #1565C0;}
+    div[data-testid="column"] {min-width: 0 !important;}
+    @media (max-width: 640px) {
+        .main-header {font-size: 1.6rem !important;}
+        .sub-header  {font-size: 0.82rem !important;}
+    }
     .stButton>button {
         background-color: #1565C0; color: white;
         border-radius: 6px; border: none;
@@ -287,7 +291,7 @@ if "results" in st.session_state:
             f"<div style='font-size:0.95rem;font-weight:600'>{val}</div></td>"
             for label, val in items
         )
-        st.markdown(f"<table style='border-collapse:collapse;width:100%'><tr>{cells}</tr></table>",
+        st.markdown(f"<div style='overflow-x:auto;-webkit-overflow-scrolling:touch'><table style='border-collapse:collapse;white-space:nowrap'><tr>{cells}</tr></table></div>",
                     unsafe_allow_html=True)
 
     def _fmt_big(n):
@@ -392,9 +396,10 @@ if "results" in st.session_state:
         st.markdown(
             f"<div style='font-size:0.85rem;font-weight:700;margin:14px 0 4px'>"
             f"<span style='color:{color}'>{emoji}</span> {title}</div>"
+            f"<div style='overflow-x:auto;-webkit-overflow-scrolling:touch'>"
             f"<table style='table-layout:fixed;border-collapse:collapse;"
             f"border:1px solid #333;margin-bottom:4px'>"
-            f"<tr>{gh}</tr><tr>{lr}</tr><tr>{vr}</tr></table>",
+            f"<tr>{gh}</tr><tr>{lr}</tr><tr>{vr}</tr></table></div>",
             unsafe_allow_html=True,
         )
 
