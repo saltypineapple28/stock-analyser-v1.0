@@ -561,7 +561,6 @@ if "results" in st.session_state:
                 st.dataframe(financials_df, use_container_width=True)
 
         # ── Dividends ─────────────────────────────────────────────────────────
-        st.markdown("---")
         st.markdown("**Dividends**")
         _div_yield   = info.get("dividendYield")
         _div_rate    = info.get("dividendRate")
@@ -593,7 +592,11 @@ if "results" in st.session_state:
             _dh = _dividends.copy()
             if hasattr(_dh.index, 'tz') and _dh.index.tz is not None:
                 _dh.index = _dh.index.tz_localize(None)
-            _dh_annual = _dh.resample("YE").sum()
+            try:
+                _dh_annual = _dh.resample("YE").sum()
+            except Exception:
+                _dh_annual = _dh.resample("Y").sum()
+            _dh_annual = _dh_annual[_dh_annual > 0]
             _dh_annual.index = _dh_annual.index.year
             import plotly.graph_objects as _go
             _fig_div = _go.Figure(_go.Bar(
@@ -609,8 +612,6 @@ if "results" in st.session_state:
                 xaxis_title="Year", yaxis_title="$ Per Share",
             )
             st.plotly_chart(_fig_div, use_container_width=True)
-        else:
-            st.info("No dividend history available for this stock.")
 
     # ── Tab: Analysts ─────────────────────────────────────────────────────────
     with tab_analyst:
