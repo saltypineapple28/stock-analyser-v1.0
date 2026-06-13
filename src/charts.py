@@ -110,6 +110,24 @@ def price_chart(df: pd.DataFrame, ticker: str, price_targets: dict = None) -> go
         xaxis_rangeslider_visible=False,
         legend=dict(orientation="h", yanchor="bottom", y=1.02),
         margin=dict(l=40, r=40, t=60, b=40),
+        xaxis=dict(
+            rangeselector=dict(
+                buttons=[
+                    dict(count=1,  label="1D",  step="day",   stepmode="backward"),
+                    dict(count=5,  label="5D",  step="day",   stepmode="backward"),
+                    dict(count=1,  label="1M",  step="month", stepmode="backward"),
+                    dict(count=6,  label="6M",  step="month", stepmode="backward"),
+                    dict(count=1,  label="YTD", step="year",  stepmode="todate"),
+                    dict(count=1,  label="1Y",  step="year",  stepmode="backward"),
+                    dict(count=5,  label="5Y",  step="year",  stepmode="backward"),
+                    dict(label="All", step="all"),
+                ],
+                bgcolor="#1E1E2E",
+                activecolor="#1565C0",
+                font=dict(color="#FFFFFF"),
+            ),
+            type="date",
+        ),
     )
     return fig
 
