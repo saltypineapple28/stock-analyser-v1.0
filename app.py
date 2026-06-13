@@ -456,6 +456,16 @@ if "results" in st.session_state:
         for detail in technical_signal.get("details", []):
             st.markdown(f"- {detail}")
         st.plotly_chart(fig_macd, use_container_width=True)
+        st.markdown(
+            "<span style='font-size:0.85rem;font-weight:600'>RSI (14)</span> "
+            "<span title='Relative Strength Index (0–100): measures momentum. "
+            "Above 70 = Overbought (may pull back). "
+            "Below 30 = Oversold (may bounce). "
+            "Around 50 = Neutral.' "
+            "style='cursor:help;font-size:0.75rem;color:#9E9E9E;border:1px solid #9E9E9E;"
+            "border-radius:50%;padding:0 4px;margin-left:4px'>ℹ</span>",
+            unsafe_allow_html=True,
+        )
         st.plotly_chart(fig_rsi, use_container_width=True)
 
         with st.expander("Raw indicator data (last 30 days)"):
