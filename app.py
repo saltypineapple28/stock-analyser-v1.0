@@ -78,8 +78,10 @@ st.markdown('<div class="main-header">📈 StockAnalyzr</div>', unsafe_allow_htm
 st.markdown('<div class="sub-header">AI-powered Stock Analysis · Price targets · Technical · Sentiment · Insider trades</div>', unsafe_allow_html=True)
 st.markdown("---")
 
-# ── Input + Options + About ────────────────────────────────────────────────────
-inp_col, opt_col, about_col = st.columns([2, 2, 2], gap="large")
+# ── Input + About ─────────────────────────────────────────────────────────────
+run_ai = run_reddit = run_news = True  # always run all analysis
+
+inp_col, about_col = st.columns([2, 3], gap="large")
 
 with inp_col:
     st.markdown("#### 🔎 Ticker Symbol")
@@ -91,12 +93,6 @@ with inp_col:
     st.caption("Don't know the ticker? [Search on Yahoo Finance](https://finance.yahoo.com/lookup/) · [Search on Google Finance](https://www.google.com/finance/)")
     st.markdown("")
     analyze_btn = st.button("🔍 Analyze Stock", use_container_width=True)
-
-with opt_col:
-    st.markdown("#### ⚙️ Analysis Options")
-    run_ai     = st.checkbox("AI Analysis",        value=True, help="GPT-4o investment summary")
-    run_reddit = st.checkbox("Sentiment Analysis",   value=True, help="Reddit (public RSS) + StockTwits sentiment scoring via VADER")
-    run_news   = st.checkbox("News Articles",        value=True, help="NewsAPI + yfinance fallback")
 
 with about_col:
     st.markdown("#### ℹ️ About")
