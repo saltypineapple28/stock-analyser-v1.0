@@ -613,7 +613,7 @@ if "results" in st.session_state:
 
             # Per-firm summary
             if "Firm" in _ud_clean.columns and "Rating" in _ud_clean.columns:
-                st.markdown("**Firm Summary** — all-time rating counts")
+                st.markdown("**Firm Summary** — number of times each firm issued each rating (all-time)")
                 def _bucket(r):
                     r = str(r).lower()
                     if "strong buy" in r: return "Strong Buy"
