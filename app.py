@@ -373,9 +373,7 @@ if "results" in st.session_state:
     def _price_table(emoji, title, color, groups):
         """Render a price target table with fixed column widths and group headers."""
         all_items = [(lbl, val) for _, items in groups for lbl, val in items]
-        n = len(all_items)
-        col_w = f"{100/n:.2f}%"
-        td_base = f"width:{col_w};padding:5px 10px;"
+        td_base = "width:110px;min-width:110px;padding:5px 10px;"
 
         gh = "".join(
             f"<th colspan='{len(items)}' style='font-size:0.65rem;font-weight:500;"
@@ -394,7 +392,7 @@ if "results" in st.session_state:
         st.markdown(
             f"<div style='font-size:0.85rem;font-weight:700;margin:14px 0 4px'>"
             f"<span style='color:{color}'>{emoji}</span> {title}</div>"
-            f"<table style='table-layout:fixed;width:100%;border-collapse:collapse;"
+            f"<table style='table-layout:fixed;border-collapse:collapse;"
             f"border:1px solid #333;margin-bottom:4px'>"
             f"<tr>{gh}</tr><tr>{lr}</tr><tr>{vr}</tr></table>",
             unsafe_allow_html=True,
