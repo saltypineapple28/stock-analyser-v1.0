@@ -80,7 +80,7 @@ st.markdown("""
 
 # ── Hero header ────────────────────────────────────────────────────────────────
 st.markdown('<div class="main-header">📈 StockAnalyzr</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">AI-powered Stock Analysis · Price targets · Technical · Sentiment · Insider trades</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-header">AI-powered Stock Analysis · Technical · Fundamental · News · Insider trades · Social Media Sentiment</div>', unsafe_allow_html=True)
 st.markdown("---")
 
 # ── Input + About ─────────────────────────────────────────────────────────────
