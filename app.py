@@ -604,8 +604,8 @@ if "results" in st.session_state:
                 _ud_clean = _ud_clean.sort_values("GradeDate", ascending=False)
             _ud_clean = _ud_clean.rename(columns={
                 "GradeDate": "Date", "ToGrade": "Rating", "FromGrade": "From",
-                "priceTargetAction": "PT Action",
-                "currentPriceTarget": "Current PT", "priorPriceTarget": "Prior PT",
+                "priceTargetAction": "Price Target Action",
+                    "currentPriceTarget": "Current Price Target", "priorPriceTarget": "Prior Price Target",
             })
 
             st.markdown("**Recent Analyst Ratings**")
