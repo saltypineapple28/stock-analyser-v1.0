@@ -106,10 +106,10 @@ def price_chart(df: pd.DataFrame, ticker: str, price_targets: dict = None) -> go
     ), row=2, col=1)
 
     fig.update_layout(
-        height=580, template="plotly_dark",
+        height=620, template="plotly_dark",
         xaxis_rangeslider_visible=False,
         legend=dict(orientation="h", yanchor="bottom", y=1.02),
-        margin=dict(l=40, r=40, t=60, b=40),
+        margin=dict(l=40, r=40, t=80, b=40),
         xaxis=dict(
             rangeselector=dict(
                 buttons=[
@@ -125,6 +125,8 @@ def price_chart(df: pd.DataFrame, ticker: str, price_targets: dict = None) -> go
                 bgcolor="#1E1E2E",
                 activecolor="#1565C0",
                 font=dict(color="#FFFFFF"),
+                y=1.18,
+                x=0,
             ),
             type="date",
         ),

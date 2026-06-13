@@ -66,7 +66,7 @@ def _fetch_history_direct(ticker: str) -> pd.DataFrame:
     This bypasses yfinance session management and works reliably on cloud.
     """
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
-    params = {"range": "1y", "interval": "1d", "events": "history", "includePrePost": "false"}
+    params = {"range": "10y", "interval": "1d", "events": "history", "includePrePost": "false"}
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -111,7 +111,7 @@ def _fetch_history(ticker: str) -> tuple:
 
     # --- Attempt 2: yf.download() ---
     try:
-        hist = yf.download(ticker, period="1y", auto_adjust=True, progress=False)
+        hist = yf.download(ticker, period="10y", auto_adjust=True, progress=False)
         if not hist.empty:
             if isinstance(hist.columns, pd.MultiIndex):
                 hist.columns = hist.columns.get_level_values(0)
@@ -122,7 +122,7 @@ def _fetch_history(ticker: str) -> tuple:
     # --- Attempt 3: t.history() ---
     for attempt in range(3):
         try:
-            hist = t.history(period="1y")
+            hist = t.history(period="10y")
             if not hist.empty:
                 return hist, t
         except Exception as e:
