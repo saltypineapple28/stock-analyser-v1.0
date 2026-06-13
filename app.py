@@ -373,45 +373,56 @@ if "results" in st.session_state:
     bb_lower, bb_upper = _bb()
     fib = _fib()
     atr = price_targets.get("atr")
-
-    # ── Buy Zone ──────────────────────────────────────────────────────────────
-    st.markdown("### 🟢 Buy Zone")
-    _compact_bar([
-        ("MA 5d",         _fmt(_ma(5))),
-        ("MA 10d",        _fmt(_ma(10))),
-        ("MA 30d",        _fmt(_ma(30))),
-        ("MA 60d",        _fmt(_ma(60))),
-        ("BB Lower (2σ)", _fmt(bb_lower)),
-        ("Fib 38.2%",     _fmt(fib.get("38.2%"))),
-        ("Fib 50.0%",     _fmt(fib.get("50.0%"))),
-        ("Fib 61.8%",     _fmt(fib.get("61.8%"))),
-    ])
-
-    # ── Sell Target ───────────────────────────────────────────────────────────
-    st.markdown("### 🔴 Sell Target")
-    _compact_bar([
-        ("MA 5d",           _fmt(_ma(5))),
-        ("MA 10d",          _fmt(_ma(10))),
-        ("MA 30d",          _fmt(_ma(30))),
-        ("MA 60d",          _fmt(_ma(60))),
-        ("BB Upper (2σ)",   _fmt(bb_upper)),
-        ("Fib Ext 127.2%",  _fmt(fib.get("Ext 127.2%"))),
-        ("Fib Ext 161.8%",  _fmt(fib.get("Ext 161.8%"))),
-        ("Analyst Target",  _fmt(price_targets.get("analyst_mean_target"))),
-    ])
-
-    # ── Cut-Loss ──────────────────────────────────────────────────────────────
-    st.markdown("### 🛑 Cut-Loss (Stop)")
     atr_1x = round(price_targets["current_price"] - 1.5 * atr, 2) if atr and price_targets.get("current_price") else None
     atr_2x = round(price_targets["current_price"] - 2.0 * atr, 2) if atr and price_targets.get("current_price") else None
-    _compact_bar([
-        ("MA 5d",          _fmt(_ma(5))),
-        ("MA 10d",         _fmt(_ma(10))),
-        ("MA 30d",         _fmt(_ma(30))),
-        ("MA 60d",         _fmt(_ma(60))),
-        ("ATR 1.5×",       _fmt(atr_1x)),
-        ("ATR 2.0×",       _fmt(atr_2x)),
-        ("BB Lower (2σ)",  _fmt(bb_lower)),
+
+    def _price_table(emoji, title, color, groups):
+        """Render a price target table with fixed column widths and group headers."""
+        all_items = [(lbl, val) for _, items in groups for lbl, val in items]
+        n = len(all_items)
+        col_w = f"{100/n:.2f}%"
+        td_base = f"width:{col_w};padding:5px 10px;"
+
+        gh = "".join(
+            f"<th colspan='{len(items)}' style='font-size:0.65rem;font-weight:500;"
+            f"color:#9E9E9E;text-align:left;padding:5px 10px 3px;"
+            f"border-bottom:1px solid #333;border-right:2px solid #444'>{grp}</th>"
+            for grp, items in groups
+        )
+        lr = "".join(
+            f"<td style='{td_base}font-size:0.68rem;color:#9E9E9E'>{lbl}</td>"
+            for lbl, _ in all_items
+        )
+        vr = "".join(
+            f"<td style='{td_base}font-size:0.93rem;font-weight:600;padding-bottom:8px'>{val}</td>"
+            for _, val in all_items
+        )
+        st.markdown(
+            f"<div style='font-size:0.85rem;font-weight:700;margin:14px 0 4px'>"
+            f"<span style='color:{color}'>{emoji}</span> {title}</div>"
+            f"<table style='table-layout:fixed;width:100%;border-collapse:collapse;"
+            f"border:1px solid #333;margin-bottom:4px'>"
+            f"<tr>{gh}</tr><tr>{lr}</tr><tr>{vr}</tr></table>",
+            unsafe_allow_html=True,
+        )
+
+    _price_table("🟢", "Buy Zone", "#4CAF50", [
+        ("Moving Average",  [("MA 5d", _fmt(_ma(5))), ("MA 10d", _fmt(_ma(10))), ("MA 30d", _fmt(_ma(30))), ("MA 60d", _fmt(_ma(60)))]),
+        ("Bollinger Band",  [("Lower (2σ)", _fmt(bb_lower))]),
+        ("Fibonacci Retracement", [("38.2%", _fmt(fib.get("38.2%"))), ("50.0%", _fmt(fib.get("50.0%"))), ("61.8%", _fmt(fib.get("61.8%")))]),
+    ])
+
+    _price_table("🔴", "Sell Target", "#F44336", [
+        ("Moving Average",  [("MA 5d", _fmt(_ma(5))), ("MA 10d", _fmt(_ma(10))), ("MA 30d", _fmt(_ma(30))), ("MA 60d", _fmt(_ma(60)))]),
+        ("Bollinger Band",  [("Upper (2σ)", _fmt(bb_upper))]),
+        ("Fibonacci Extension", [("127.2%", _fmt(fib.get("Ext 127.2%"))), ("161.8%", _fmt(fib.get("Ext 161.8%")))]),
+        ("Analyst",         [("Consensus Target", _fmt(price_targets.get("analyst_mean_target")))]),
+    ])
+
+    _price_table("🛑", "Cut-Loss (Stop)", "#FF5722", [
+        ("Moving Average",  [("MA 5d", _fmt(_ma(5))), ("MA 10d", _fmt(_ma(10))), ("MA 30d", _fmt(_ma(30))), ("MA 60d", _fmt(_ma(60)))]),
+        ("ATR Stop",        [("1.5× ATR", _fmt(atr_1x)), ("2.0× ATR", _fmt(atr_2x))]),
+        ("Bollinger Band",  [("Lower (2σ)", _fmt(bb_lower))]),
     ])
 
     # ── Download buttons ──────────────────────────────────────────────────────
