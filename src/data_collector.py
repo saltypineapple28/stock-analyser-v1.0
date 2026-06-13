@@ -206,6 +206,11 @@ def get_stock_data(ticker: str) -> dict:
     except Exception:
         yf_news = []
 
+    try:
+        dividends = t.dividends
+    except Exception:
+        dividends = pd.Series(dtype=float)
+
     return {
         "ticker": ticker.upper(),
         "history": history,
@@ -218,6 +223,7 @@ def get_stock_data(ticker: str) -> dict:
         "analyst_targets": analyst_targets,
         "earnings_dates": earnings_dates,
         "yf_news": yf_news,
+        "dividends": dividends,
     }
 
 

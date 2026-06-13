@@ -233,6 +233,7 @@ if analyze_btn:
         "analyst_consensus": analyst_consensus,
         "recommendations": data.get("recommendations"),
         "upgrades_downgrades": data.get("upgrades_downgrades"),
+        "dividends": data.get("dividends"),
         "ai_text": ai_text,
         "news_scored": news_scored,
         "reddit_posts": reddit_posts,
@@ -259,6 +260,7 @@ if "results" in st.session_state:
     analyst_consensus = _r["analyst_consensus"]
     _recommendations  = _r.get("recommendations")
     _upgrades         = _r.get("upgrades_downgrades")
+    _dividends        = _r.get("dividends")
     ai_text           = _r["ai_text"]
     news_scored       = _r["news_scored"]
     reddit_posts      = _r["reddit_posts"]
@@ -557,6 +559,58 @@ if "results" in st.session_state:
         if not financials_df.empty:
             with st.expander("Full Financial Statements"):
                 st.dataframe(financials_df, use_container_width=True)
+
+        # ── Dividends ─────────────────────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("**Dividends**")
+        _div_yield   = info.get("dividendYield")
+        _div_rate    = info.get("dividendRate")
+        _div_ex      = info.get("exDividendDate")
+        _div_payout  = info.get("payoutRatio")
+        _div_5yr     = info.get("fiveYearAvgDividendYield")
+        _div_trail   = info.get("trailingAnnualDividendRate")
+        _last_div    = info.get("lastDividendValue")
+        _last_date   = info.get("lastDividendDate")
+
+        import datetime as _dt
+        def _ts(v):
+            try: return _dt.datetime.fromtimestamp(int(v)).strftime("%Y-%m-%d")
+            except: return "N/A"
+
+        dc1, dc2, dc3, dc4 = st.columns(4)
+        dc1.metric("Annual Dividend/Share", f"${_div_rate:.2f}" if _div_rate else "N/A")
+        dc2.metric("Dividend Yield",        f"{_div_yield*100:.2f}%" if _div_yield else "N/A")
+        dc3.metric("5-Year Avg Yield",      f"{_div_5yr:.2f}%" if _div_5yr else "N/A")
+        dc4.metric("Payout Ratio",          f"{_div_payout*100:.1f}%" if _div_payout else "N/A")
+
+        dc5, dc6, dc7, _ = st.columns(4)
+        dc5.metric("Last Dividend/Share",   f"${_last_div:.4f}" if _last_div else "N/A")
+        dc6.metric("Last Payment Date",     _ts(_last_date) if _last_date else "N/A")
+        dc7.metric("Ex-Dividend Date",      _ts(_div_ex) if _div_ex else "N/A")
+
+        # Dividend history chart
+        if _dividends is not None and isinstance(_dividends, pd.Series) and not _dividends.empty:
+            _dh = _dividends.copy()
+            if hasattr(_dh.index, 'tz') and _dh.index.tz is not None:
+                _dh.index = _dh.index.tz_localize(None)
+            _dh_annual = _dh.resample("YE").sum()
+            _dh_annual.index = _dh_annual.index.year
+            import plotly.graph_objects as _go
+            _fig_div = _go.Figure(_go.Bar(
+                x=_dh_annual.index.astype(str),
+                y=_dh_annual.values,
+                marker_color="#1565C0",
+                name="Annual Dividend/Share",
+            ))
+            _fig_div.update_layout(
+                title="Annual Dividend Per Share History",
+                height=300, template="plotly_dark",
+                margin=dict(l=40, r=40, t=50, b=40),
+                xaxis_title="Year", yaxis_title="$ Per Share",
+            )
+            st.plotly_chart(_fig_div, use_container_width=True)
+        else:
+            st.info("No dividend history available for this stock.")
 
     # ── Tab: Analysts ─────────────────────────────────────────────────────────
     with tab_analyst:
