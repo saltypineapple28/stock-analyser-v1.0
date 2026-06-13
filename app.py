@@ -579,8 +579,10 @@ if "results" in st.session_state:
             _ud = _upgrades
             if _ud is not None and isinstance(_ud, pd.DataFrame) and not _ud.empty:
                 _ud = _ud.reset_index()
-                # normalise column names (yfinance may vary)
                 _ud.columns = [c.strip() for c in _ud.columns]
+                with st.expander("🔍 debug – raw columns", expanded=True):
+                    st.write("Columns:", list(_ud.columns))
+                    st.write(_ud.head(3))
                 date_col  = next((c for c in _ud.columns if "date" in c.lower()), None)
                 firm_col  = next((c for c in _ud.columns if "firm" in c.lower()), None)
                 grade_col = next((c for c in _ud.columns if "tograde" in c.lower().replace(" ","") or c.lower() == "to grade"), None)
@@ -592,6 +594,10 @@ if "results" in st.session_state:
                         _ud_show = _ud_show.sort_values(date_col, ascending=False)
                     _ud_show.columns = [c.title() for c in _ud_show.columns]
                     st.dataframe(_ud_show.head(25), use_container_width=True, hide_index=True)
+                else:
+                    st.write("firm_col:", firm_col, "grade_col:", grade_col)
+            else:
+                st.write("_upgrades is:", type(_ud), "empty:", _ud.empty if isinstance(_ud, pd.DataFrame) else "N/A")
         with c2:
             st.markdown(
                 "<span style='font-size:1rem;font-weight:600'>Price Targets</span> "
