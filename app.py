@@ -102,7 +102,7 @@ with inp_col:
 with about_col:
     st.markdown("#### ℹ️ About")
     st.markdown("""
-- Financial data, Technicals and News via **Yahoo Finance**
+- Financial data via **Yahoo Finance**
 - Sentiment via **Reddit** (RSS) + **StockTwits**
 - Insider trades via **SEC EDGAR** Form 4
 - AI analysis via **GPT-4o**
