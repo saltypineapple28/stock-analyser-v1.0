@@ -57,6 +57,7 @@ st.markdown("""
     .signal-bearish {color: #C62828; font-weight: 700;}
     .signal-neutral {color: #F57F17; font-weight: 700;}
     div[data-testid="column"] {min-width: 0 !important;}
+    [data-testid="stMetric"] {border-bottom: none !important; box-shadow: none !important;}
     @media (max-width: 640px) {
         .main-header {font-size: 1.6rem !important;}
         .sub-header  {font-size: 0.82rem !important;}
@@ -286,12 +287,12 @@ if "results" in st.session_state:
     def _compact_bar(items):
         """Render a horizontal compact info bar like exchange tickers."""
         cells = "".join(
-            f"<td style='padding:10px 40px 10px 0;border:none'>"
+            f"<td style='padding:10px 0;border:none;width:{100//len(items)}%'>"
             f"<div style='font-size:0.72rem;color:#9E9E9E;margin-bottom:3px'>{label}</div>"
             f"<div style='font-size:1.0rem;font-weight:600'>{val}</div></td>"
             for label, val in items
         )
-        st.markdown(f"<div style='overflow-x:auto;-webkit-overflow-scrolling:touch'><table style='border-collapse:collapse;border:none;white-space:nowrap'><tr>{cells}</tr></table></div>",
+        st.markdown(f"<div style='overflow-x:auto;-webkit-overflow-scrolling:touch'><table style='border-collapse:collapse;border:none;width:100%;table-layout:fixed'><tr>{cells}</tr></table></div>",
                     unsafe_allow_html=True)
 
     def _fmt_big(n):
@@ -315,7 +316,7 @@ if "results" in st.session_state:
         except Exception: return "N/A"
 
     _compact_bar([
-        ("Mkt Cap",   _fmt_big(info.get("marketCap"))),
+        ("Market Cap",   _fmt_big(info.get("marketCap"))),
         ("Volume",    _fmt_vol(info.get("volume"))),
         ("52W High",  f"${info.get('fiftyTwoWeekHigh','N/A')}"),
         ("52W Low",   f"${info.get('fiftyTwoWeekLow','N/A')}"),
