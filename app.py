@@ -102,9 +102,8 @@ with opt_col:
 with about_col:
     st.markdown("#### ℹ️ About")
     st.markdown("""
-- Price data & technicals via **yfinance**
-- News via **NewsAPI** + yfinance
-- Sentiment via **Reddit** (RSS) + **StockTwits** (VADER scoring)
+- Financial data, Technicals and News via **Yahoo Finance**
+- Sentiment via **Reddit** (RSS) + **StockTwits**
 - Insider trades via **SEC EDGAR** Form 4
 - AI analysis via **GPT-4o**
 """)
