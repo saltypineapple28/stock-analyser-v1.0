@@ -575,22 +575,6 @@ if "results" in st.session_state:
                 unsafe_allow_html=True,
             )
             st.plotly_chart(fig_analyst, use_container_width=True)
-            # Individual firm ratings table from upgrades_downgrades
-            _ud = _upgrades
-            if _ud is not None and isinstance(_ud, pd.DataFrame) and not _ud.empty:
-                _ud = _ud.reset_index()
-                _ud.columns = [c.strip() for c in _ud.columns]
-                _keep = [c for c in ["GradeDate","Firm","ToGrade","FromGrade","Action","priceTargetAction","currentPriceTarget","priorPriceTarget"] if c in _ud.columns]
-                _ud_show = _ud[_keep].copy()
-                if "GradeDate" in _ud_show.columns:
-                    _ud_show["GradeDate"] = pd.to_datetime(_ud_show["GradeDate"]).dt.strftime("%Y-%m-%d")
-                    _ud_show = _ud_show.sort_values("GradeDate", ascending=False)
-                _ud_show = _ud_show.rename(columns={
-                    "GradeDate": "Date", "ToGrade": "Rating", "FromGrade": "From",
-                    "priceTargetAction": "PT Action",
-                    "currentPriceTarget": "Current PT", "priorPriceTarget": "Prior PT",
-                })
-                st.dataframe(_ud_show.head(30), use_container_width=True, hide_index=True)
         with c2:
             st.markdown(
                 "<span style='font-size:1rem;font-weight:600'>Price Targets</span> "
@@ -607,6 +591,45 @@ if "results" in st.session_state:
                       f"${price_targets.get('analyst_mean_target', 'N/A')}")
             st.metric("Analyst Low", f"${price_targets.get('analyst_low_target', 'N/A')}")
             st.metric("Analyst High", f"${price_targets.get('analyst_high_target', 'N/A')}")
+
+        # ── Full-width ratings detail below ──────────────────────────────────
+        _ud = _upgrades
+        if _ud is not None and isinstance(_ud, pd.DataFrame) and not _ud.empty:
+            _ud = _ud.reset_index()
+            _ud.columns = [c.strip() for c in _ud.columns]
+            _keep = [c for c in ["GradeDate","Firm","ToGrade","FromGrade","Action","priceTargetAction","currentPriceTarget","priorPriceTarget"] if c in _ud.columns]
+            _ud_clean = _ud[_keep].copy()
+            if "GradeDate" in _ud_clean.columns:
+                _ud_clean["GradeDate"] = pd.to_datetime(_ud_clean["GradeDate"]).dt.strftime("%Y-%m-%d")
+                _ud_clean = _ud_clean.sort_values("GradeDate", ascending=False)
+            _ud_clean = _ud_clean.rename(columns={
+                "GradeDate": "Date", "ToGrade": "Rating", "FromGrade": "From",
+                "priceTargetAction": "PT Action",
+                "currentPriceTarget": "Current PT", "priorPriceTarget": "Prior PT",
+            })
+
+            st.markdown("**Recent Analyst Ratings**")
+            st.dataframe(_ud_clean.head(30), use_container_width=True, hide_index=True)
+
+            # Per-firm summary
+            if "Firm" in _ud_clean.columns and "Rating" in _ud_clean.columns:
+                st.markdown("**Firm Summary** — all-time rating counts")
+                def _bucket(r):
+                    r = str(r).lower()
+                    if "strong buy" in r: return "Strong Buy"
+                    if "buy" in r or "outperform" in r or "overweight" in r: return "Buy"
+                    if "strong sell" in r or "underperform" in r or "underweight" in r: return "Strong Sell"
+                    if "sell" in r: return "Sell"
+                    return "Hold/Neutral"
+                _ud_clean["Bucket"] = _ud_clean["Rating"].apply(_bucket)
+                _firm_summary = (
+                    _ud_clean.groupby(["Firm","Bucket"])
+                    .size().unstack(fill_value=0)
+                    .reindex(columns=["Strong Buy","Buy","Hold/Neutral","Sell","Strong Sell"], fill_value=0)
+                )
+                _firm_summary["Total"] = _firm_summary.sum(axis=1)
+                _firm_summary = _firm_summary.sort_values("Total", ascending=False)
+                st.dataframe(_firm_summary, use_container_width=True)
 
     # ── Tab: AI Analysis ──────────────────────────────────────────────────────
     with tab_ai:
