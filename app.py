@@ -558,9 +558,31 @@ if "results" in st.session_state:
     with tab_analyst:
         c1, c2 = st.columns([1, 1])
         with c1:
+            st.markdown(
+                "<span style='font-size:1rem;font-weight:600'>Analyst Rating Distribution</span> "
+                "<span title=\'Source: Yahoo Finance · Ratings are submitted by investment banks and "
+                "brokerages (e.g. Goldman Sachs, Morgan Stanley, JPMorgan, Barclays). "
+                "Each firm upgrades or downgrades a stock based on their own research. "
+                "Strong Buy / Buy = bullish outlook. Hold = neutral. "
+                "Sell / Strong Sell = bearish outlook. "
+                "Counts reflect the most recent analyst consensus period.\' "
+                "style=\'cursor:help;font-size:0.75rem;color:#9E9E9E;border:1px solid #9E9E9E;"
+                "border-radius:50%;padding:0 4px;margin-left:4px\'>ℹ</span>",
+                unsafe_allow_html=True,
+            )
             st.plotly_chart(fig_analyst, use_container_width=True)
         with c2:
-            st.markdown("**Price Targets**")
+            st.markdown(
+                "<span style='font-size:1rem;font-weight:600'>Price Targets</span> "
+                "<span title=\'Source: Yahoo Finance · Mean, Low, and High price targets are "
+                "aggregated from Wall Street analysts who cover this stock. "
+                "The Mean Target is the average of all analyst 12-month price forecasts. "
+                "Low / High show the range of estimates. "
+                "More analysts = higher confidence in the consensus.\' "
+                "style=\'cursor:help;font-size:0.75rem;color:#9E9E9E;border:1px solid #9E9E9E;"
+                "border-radius:50%;padding:0 4px;margin-left:4px\'>ℹ</span>",
+                unsafe_allow_html=True,
+            )
             st.metric("Analyst Mean Target",
                       f"${price_targets.get('analyst_mean_target', 'N/A')}")
             st.metric("Analyst Low", f"${price_targets.get('analyst_low_target', 'N/A')}")
