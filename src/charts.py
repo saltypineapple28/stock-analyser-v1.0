@@ -105,12 +105,18 @@ def price_chart(df: pd.DataFrame, ticker: str, price_targets: dict = None) -> go
         marker_color=colors, opacity=0.7,
     ), row=2, col=1)
 
+    # Default view: last 1 year
+    import datetime as _dt
+    _end   = df.index.max()
+    _start = _end - pd.DateOffset(years=1)
+
     fig.update_layout(
-        height=620, template="plotly_dark",
+        height=640, template="plotly_dark",
         xaxis_rangeslider_visible=False,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02),
-        margin=dict(l=40, r=40, t=80, b=40),
+        legend=dict(orientation="h", yanchor="bottom", y=1.08),
+        margin=dict(l=40, r=40, t=100, b=40),
         xaxis=dict(
+            range=[_start, _end],
             rangeselector=dict(
                 buttons=[
                     dict(count=1,  label="1D",  step="day",   stepmode="backward"),
@@ -122,10 +128,12 @@ def price_chart(df: pd.DataFrame, ticker: str, price_targets: dict = None) -> go
                     dict(count=5,  label="5Y",  step="year",  stepmode="backward"),
                     dict(label="All", step="all"),
                 ],
-                bgcolor="#1E1E2E",
+                bgcolor="#263238",
                 activecolor="#1565C0",
-                font=dict(color="#FFFFFF"),
-                y=1.18,
+                bordercolor="#455A64",
+                borderwidth=1,
+                font=dict(color="#FFFFFF", size=13),
+                y=1.22,
                 x=0,
             ),
             type="date",
