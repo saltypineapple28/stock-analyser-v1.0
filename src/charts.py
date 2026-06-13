@@ -235,9 +235,8 @@ def analyst_donut_chart(analyst_consensus: dict) -> go.Figure:
         textinfo="label+value",
     ))
     fig.update_layout(
-        title="Analyst Ratings Distribution",
         height=320, template="plotly_dark",
-        margin=dict(l=20, r=20, t=50, b=20),
+        margin=dict(l=20, r=20, t=20, b=20),
         showlegend=False,
     )
     return fig

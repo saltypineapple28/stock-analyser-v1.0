@@ -231,6 +231,7 @@ if analyze_btn:
         "technical_signal": technical_signal,
         "sentiment_summary": sentiment_summary,
         "analyst_consensus": analyst_consensus,
+        "recommendations": data.get("recommendations"),
         "ai_text": ai_text,
         "news_scored": news_scored,
         "reddit_posts": reddit_posts,
@@ -255,6 +256,7 @@ if "results" in st.session_state:
     technical_signal  = _r["technical_signal"]
     sentiment_summary = _r["sentiment_summary"]
     analyst_consensus = _r["analyst_consensus"]
+    _recommendations  = _r.get("recommendations")
     ai_text           = _r["ai_text"]
     news_scored       = _r["news_scored"]
     reddit_posts      = _r["reddit_posts"]
@@ -571,6 +573,15 @@ if "results" in st.session_state:
                 unsafe_allow_html=True,
             )
             st.plotly_chart(fig_analyst, use_container_width=True)
+            # Individual firm ratings table
+            if _recommendations is not None and isinstance(_recommendations, pd.DataFrame) and not _recommendations.empty:
+                if "To Grade" in _recommendations.columns and "Firm" in _recommendations.columns:
+                    _rec_display = _recommendations[["Firm", "To Grade"]].copy()
+                    _rec_display.index = pd.to_datetime(_rec_display.index).strftime("%Y-%m-%d") if hasattr(_rec_display.index, 'strftime') else _rec_display.index
+                    _rec_display = _rec_display.reset_index()
+                    _rec_display.columns = ["Date", "Firm", "Rating"]
+                    _rec_display = _rec_display.sort_values("Date", ascending=False).head(20)
+                    st.dataframe(_rec_display, use_container_width=True, hide_index=True)
         with c2:
             st.markdown(
                 "<span style='font-size:1rem;font-weight:600'>Price Targets</span> "
