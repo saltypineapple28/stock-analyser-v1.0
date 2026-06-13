@@ -232,6 +232,7 @@ if analyze_btn:
         "sentiment_summary": sentiment_summary,
         "analyst_consensus": analyst_consensus,
         "recommendations": data.get("recommendations"),
+        "upgrades_downgrades": data.get("upgrades_downgrades"),
         "ai_text": ai_text,
         "news_scored": news_scored,
         "reddit_posts": reddit_posts,
@@ -257,6 +258,7 @@ if "results" in st.session_state:
     sentiment_summary = _r["sentiment_summary"]
     analyst_consensus = _r["analyst_consensus"]
     _recommendations  = _r.get("recommendations")
+    _upgrades         = _r.get("upgrades_downgrades")
     ai_text           = _r["ai_text"]
     news_scored       = _r["news_scored"]
     reddit_posts      = _r["reddit_posts"]
@@ -573,15 +575,23 @@ if "results" in st.session_state:
                 unsafe_allow_html=True,
             )
             st.plotly_chart(fig_analyst, use_container_width=True)
-            # Individual firm ratings table
-            if _recommendations is not None and isinstance(_recommendations, pd.DataFrame) and not _recommendations.empty:
-                if "To Grade" in _recommendations.columns and "Firm" in _recommendations.columns:
-                    _rec_display = _recommendations[["Firm", "To Grade"]].copy()
-                    _rec_display.index = pd.to_datetime(_rec_display.index).strftime("%Y-%m-%d") if hasattr(_rec_display.index, 'strftime') else _rec_display.index
-                    _rec_display = _rec_display.reset_index()
-                    _rec_display.columns = ["Date", "Firm", "Rating"]
-                    _rec_display = _rec_display.sort_values("Date", ascending=False).head(20)
-                    st.dataframe(_rec_display, use_container_width=True, hide_index=True)
+            # Individual firm ratings table from upgrades_downgrades
+            _ud = _upgrades
+            if _ud is not None and isinstance(_ud, pd.DataFrame) and not _ud.empty:
+                _ud = _ud.reset_index()
+                # normalise column names (yfinance may vary)
+                _ud.columns = [c.strip() for c in _ud.columns]
+                date_col  = next((c for c in _ud.columns if "date" in c.lower()), None)
+                firm_col  = next((c for c in _ud.columns if "firm" in c.lower()), None)
+                grade_col = next((c for c in _ud.columns if "tograde" in c.lower().replace(" ","") or c.lower() == "to grade"), None)
+                if firm_col and grade_col:
+                    disp_cols = [c for c in [date_col, firm_col, grade_col] if c]
+                    _ud_show = _ud[disp_cols].copy()
+                    if date_col:
+                        _ud_show[date_col] = pd.to_datetime(_ud_show[date_col]).dt.strftime("%Y-%m-%d")
+                        _ud_show = _ud_show.sort_values(date_col, ascending=False)
+                    _ud_show.columns = [c.title() for c in _ud_show.columns]
+                    st.dataframe(_ud_show.head(25), use_container_width=True, hide_index=True)
         with c2:
             st.markdown(
                 "<span style='font-size:1rem;font-weight:600'>Price Targets</span> "

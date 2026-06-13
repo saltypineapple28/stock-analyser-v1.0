@@ -182,6 +182,12 @@ def get_stock_data(ticker: str) -> dict:
         recommendations = pd.DataFrame()
 
     try:
+        upgrades_downgrades = t.upgrades_downgrades
+        time.sleep(0.3)
+    except Exception:
+        upgrades_downgrades = pd.DataFrame()
+
+    try:
         analyst_targets = t.analyst_price_targets
         time.sleep(0.3)
     except Exception:
@@ -208,6 +214,7 @@ def get_stock_data(ticker: str) -> dict:
         "balance_sheet": balance_sheet,
         "cashflow": cashflow,
         "recommendations": recommendations,
+        "upgrades_downgrades": upgrades_downgrades,
         "analyst_targets": analyst_targets,
         "earnings_dates": earnings_dates,
         "yf_news": yf_news,
