@@ -106,7 +106,6 @@ def price_chart(df: pd.DataFrame, ticker: str, price_targets: dict = None) -> go
     ), row=2, col=1)
 
     # Default view: last 1 year
-    import datetime as _dt
     _end   = df.index.max()
     _start = _end - pd.DateOffset(years=1)
 
@@ -116,8 +115,9 @@ def price_chart(df: pd.DataFrame, ticker: str, price_targets: dict = None) -> go
         legend=dict(orientation="h", yanchor="bottom", y=1.08),
         margin=dict(l=40, r=40, t=100, b=40),
         xaxis=dict(
-            range=[_start, _end],
+            range=[str(_start.date()), str(_end.date())],
             rangeselector=dict(
+                active=5,
                 buttons=[
                     dict(count=1,  label="1D",  step="day",   stepmode="backward"),
                     dict(count=5,  label="5D",  step="day",   stepmode="backward"),
