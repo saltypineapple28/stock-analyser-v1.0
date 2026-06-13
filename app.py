@@ -418,8 +418,8 @@ if "results" in st.session_state:
 
     _price_table("🛑", "Cut-Loss (Stop)", "#FF5722", [
         ("Moving Average",  [("MA 5d", _fmt(_ma(5))), ("MA 10d", _fmt(_ma(10))), ("MA 30d", _fmt(_ma(30))), ("MA 60d", _fmt(_ma(60)))]),
-        ("ATR Stop",        [("1.5× ATR", _fmt(atr_1x)), ("2.0× ATR", _fmt(atr_2x))]),
         ("Bollinger Band",  [("Lower (2σ)", _fmt(bb_lower))]),
+        ("ATR Stop",        [("1.5× ATR", _fmt(atr_1x)), ("2.0× ATR", _fmt(atr_2x))]),
     ])
 
     # ── Download buttons ──────────────────────────────────────────────────────
