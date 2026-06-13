@@ -284,6 +284,48 @@ if "results" in st.session_state:
     m2.metric("Technical",     technical_signal.get("overall", "N/A"))
     m3.metric("Sentiment",     sentiment_summary.get("overall_label", "N/A"))
 
+    # ── Compact info bar (Mkt Cap, Volume, 52W, PE) ───────────────────────────
+    def _compact_bar(items):
+        """Render a horizontal compact info bar like exchange tickers."""
+        cells = "".join(
+            f"<td style='padding:6px 20px 6px 0;border-right:1px solid #444;padding-right:20px;margin-right:20px'>"
+            f"<div style='font-size:0.72rem;color:#9E9E9E'>{label}</div>"
+            f"<div style='font-size:0.95rem;font-weight:600'>{val}</div></td>"
+            for label, val in items
+        )
+        st.markdown(f"<table style='border-collapse:collapse;width:100%'><tr>{cells}</tr></table>",
+                    unsafe_allow_html=True)
+
+    def _fmt_big(n):
+        if n is None: return "N/A"
+        try:
+            n = float(n)
+            if n >= 1e12: return f"${n/1e12:.2f}T"
+            if n >= 1e9:  return f"${n/1e9:.2f}B"
+            if n >= 1e6:  return f"${n/1e6:.2f}M"
+            return f"${n:,.0f}"
+        except Exception: return "N/A"
+
+    def _fmt_vol(n):
+        if n is None: return "N/A"
+        try:
+            n = float(n)
+            if n >= 1e9: return f"{n/1e9:.2f}B"
+            if n >= 1e6: return f"{n/1e6:.2f}M"
+            if n >= 1e3: return f"{n/1e3:.2f}K"
+            return str(int(n))
+        except Exception: return "N/A"
+
+    _compact_bar([
+        ("Mkt Cap",   _fmt_big(info.get("marketCap"))),
+        ("Volume",    _fmt_vol(info.get("volume"))),
+        ("52W High",  f"${info.get('fiftyTwoWeekHigh','N/A')}"),
+        ("52W Low",   f"${info.get('fiftyTwoWeekLow','N/A')}"),
+        ("PE Ratio",  round(info.get("trailingPE", 0), 2) if info.get("trailingPE") else "N/A"),
+        ("Div Yield", f"{round(info.get('dividendYield',0)*100,2)}%" if info.get("dividendYield") else "N/A"),
+        ("Beta",      info.get("beta", "N/A")),
+    ])
+
     # ── Helper functions ──────────────────────────────────────────────────────
     def _ma(days):
         try:
@@ -334,57 +376,43 @@ if "results" in st.session_state:
 
     # ── Buy Zone ──────────────────────────────────────────────────────────────
     st.markdown("### 🟢 Buy Zone")
-
-    st.markdown("**Moving Average Support**")
-    bz1, bz2, bz3, bz4 = st.columns(4)
-    def _mini(col, label, val):
-        col.markdown(f"<div style='font-size:0.75rem;color:#9E9E9E;margin-top:10px'>{label}</div><div style='font-size:1rem;font-weight:600;margin-bottom:14px'>{val}</div>", unsafe_allow_html=True)
-    _mini(bz1, "MA 5 days",  _fmt(_ma(5)))
-    _mini(bz2, "MA 10 days", _fmt(_ma(10)))
-    _mini(bz3, "MA 30 days", _fmt(_ma(30)))
-    _mini(bz4, "MA 60 days", _fmt(_ma(60)))
-
-    st.markdown("**Bollinger Band & Fibonacci Retracement**")
-    bb1, f1, f2, f3 = st.columns(4)
-    _mini(bb1, "BB Lower (2σ)", _fmt(bb_lower))
-    _mini(f1,  "Fib 38.2%",    _fmt(fib.get("38.2%")))
-    _mini(f2,  "Fib 50.0%",    _fmt(fib.get("50.0%")))
-    _mini(f3,  "Fib 61.8%",    _fmt(fib.get("61.8%")))
+    _compact_bar([
+        ("MA 5d",         _fmt(_ma(5))),
+        ("MA 10d",        _fmt(_ma(10))),
+        ("MA 30d",        _fmt(_ma(30))),
+        ("MA 60d",        _fmt(_ma(60))),
+        ("BB Lower (2σ)", _fmt(bb_lower)),
+        ("Fib 38.2%",     _fmt(fib.get("38.2%"))),
+        ("Fib 50.0%",     _fmt(fib.get("50.0%"))),
+        ("Fib 61.8%",     _fmt(fib.get("61.8%"))),
+    ])
 
     # ── Sell Target ───────────────────────────────────────────────────────────
     st.markdown("### 🔴 Sell Target")
-
-    st.markdown("**Moving Average Resistance**")
-    st1, st2, st3, st4 = st.columns(4)
-    _mini(st1, "MA 5 days",  _fmt(_ma(5)))
-    _mini(st2, "MA 10 days", _fmt(_ma(10)))
-    _mini(st3, "MA 30 days", _fmt(_ma(30)))
-    _mini(st4, "MA 60 days", _fmt(_ma(60)))
-
-    st.markdown("**Bollinger Band & Fibonacci Extension**")
-    bb2, fe1, fe2, an1 = st.columns(4)
-    _mini(bb2, "BB Upper (2σ)",   _fmt(bb_upper))
-    _mini(fe1, "Fib Ext 127.2%",  _fmt(fib.get("Ext 127.2%")))
-    _mini(fe2, "Fib Ext 161.8%",  _fmt(fib.get("Ext 161.8%")))
-    _mini(an1, "Analyst Target",  _fmt(price_targets.get("analyst_mean_target")))
+    _compact_bar([
+        ("MA 5d",           _fmt(_ma(5))),
+        ("MA 10d",          _fmt(_ma(10))),
+        ("MA 30d",          _fmt(_ma(30))),
+        ("MA 60d",          _fmt(_ma(60))),
+        ("BB Upper (2σ)",   _fmt(bb_upper)),
+        ("Fib Ext 127.2%",  _fmt(fib.get("Ext 127.2%"))),
+        ("Fib Ext 161.8%",  _fmt(fib.get("Ext 161.8%"))),
+        ("Analyst Target",  _fmt(price_targets.get("analyst_mean_target"))),
+    ])
 
     # ── Cut-Loss ──────────────────────────────────────────────────────────────
     st.markdown("### 🛑 Cut-Loss (Stop)")
-
-    st.markdown("**Moving Average Stops**")
-    cl1, cl2, cl3, cl4 = st.columns(4)
-    _mini(cl1, "MA 5 days",  _fmt(_ma(5)))
-    _mini(cl2, "MA 10 days", _fmt(_ma(10)))
-    _mini(cl3, "MA 30 days", _fmt(_ma(30)))
-    _mini(cl4, "MA 60 days", _fmt(_ma(60)))
-
-    st.markdown("**ATR & Bollinger Band Stops**")
-    atr1, atr2, atr3, _ = st.columns(4)
     atr_1x = round(price_targets["current_price"] - 1.5 * atr, 2) if atr and price_targets.get("current_price") else None
     atr_2x = round(price_targets["current_price"] - 2.0 * atr, 2) if atr and price_targets.get("current_price") else None
-    _mini(atr1, "ATR 1.5×",     _fmt(atr_1x))
-    _mini(atr2, "ATR 2.0×",     _fmt(atr_2x))
-    _mini(atr3, "BB Lower (2σ)", _fmt(bb_lower))
+    _compact_bar([
+        ("MA 5d",          _fmt(_ma(5))),
+        ("MA 10d",         _fmt(_ma(10))),
+        ("MA 30d",         _fmt(_ma(30))),
+        ("MA 60d",         _fmt(_ma(60))),
+        ("ATR 1.5×",       _fmt(atr_1x)),
+        ("ATR 2.0×",       _fmt(atr_2x)),
+        ("BB Lower (2σ)",  _fmt(bb_lower)),
+    ])
 
     # ── Download buttons ──────────────────────────────────────────────────────
     st.markdown("---")
