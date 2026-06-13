@@ -106,7 +106,7 @@ with about_col:
 - Insider trades via **SEC EDGAR** Form 4
 - AI analysis via **GPT-4o**
 """)
-    st.markdown("<small style='color:#9E9E9E'>✍️ @okelaloli &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; Jun 2026</small>", unsafe_allow_html=True)
+    st.markdown("<small style='color:#9E9E9E'>✍️ from Linnie with 😘 @okelaloli &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; Jun 2026</small>", unsafe_allow_html=True)
 
 st.markdown("---")
 
