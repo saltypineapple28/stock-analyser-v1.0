@@ -286,12 +286,12 @@ if "results" in st.session_state:
     def _compact_bar(items):
         """Render a horizontal compact info bar like exchange tickers."""
         cells = "".join(
-            f"<td style='padding:6px 24px 6px 0'>"
-            f"<div style='font-size:0.72rem;color:#9E9E9E'>{label}</div>"
-            f"<div style='font-size:0.95rem;font-weight:600'>{val}</div></td>"
+            f"<td style='padding:10px 40px 10px 0;border:none'>"
+            f"<div style='font-size:0.72rem;color:#9E9E9E;margin-bottom:3px'>{label}</div>"
+            f"<div style='font-size:1.0rem;font-weight:600'>{val}</div></td>"
             for label, val in items
         )
-        st.markdown(f"<div style='overflow-x:auto;-webkit-overflow-scrolling:touch'><table style='border-collapse:collapse;white-space:nowrap'><tr>{cells}</tr></table></div>",
+        st.markdown(f"<div style='overflow-x:auto;-webkit-overflow-scrolling:touch'><table style='border-collapse:collapse;border:none;white-space:nowrap'><tr>{cells}</tr></table></div>",
                     unsafe_allow_html=True)
 
     def _fmt_big(n):
