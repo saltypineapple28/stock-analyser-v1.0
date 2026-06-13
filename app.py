@@ -276,7 +276,7 @@ if "results" in st.session_state:
     col_info3.markdown(f"**Exchange:** {info.get('exchange', 'N/A')}")
 
     # ── Key metrics row ───────────────────────────────────────────────────────
-    st.markdown("---")
+    st.markdown("<div style='margin-top:12px'></div>", unsafe_allow_html=True)
 
     m1, m2, m3 = st.columns(3)
     m1.metric("Current Price", f"${price_targets.get('current_price', 'N/A')}")
