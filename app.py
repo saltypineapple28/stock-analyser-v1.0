@@ -95,18 +95,18 @@ with inp_col:
 
 with opt_col:
     st.markdown("#### ⚙️ Analysis Options")
-    run_ai     = st.checkbox("🤖 AI Analysis",       value=True, help="GPT-4o investment summary")
-    run_reddit = st.checkbox("💬 Sentiment Analysis",   value=True, help="Reddit (public RSS) + StockTwits sentiment scoring via VADER")
-    run_news   = st.checkbox("📰 News Articles",      value=True, help="NewsAPI + yfinance fallback")
+    run_ai     = st.checkbox("AI Analysis",        value=True, help="GPT-4o investment summary")
+    run_reddit = st.checkbox("Sentiment Analysis",   value=True, help="Reddit (public RSS) + StockTwits sentiment scoring via VADER")
+    run_news   = st.checkbox("News Articles",        value=True, help="NewsAPI + yfinance fallback")
 
 with about_col:
     st.markdown("#### ℹ️ About")
     st.markdown("""
-- 📊 Price data & technicals via **yfinance**
-- 📰 News via **NewsAPI** + yfinance
-- 💬 Sentiment via **Reddit** (RSS) + **StockTwits** (VADER scoring)
-- 🏛️ Insider trades via **SEC EDGAR** Form 4
-- 🤖 AI analysis via **GPT-4o**
+- Price data & technicals via **yfinance**
+- News via **NewsAPI** + yfinance
+- Sentiment via **Reddit** (RSS) + **StockTwits** (VADER scoring)
+- Insider trades via **SEC EDGAR** Form 4
+- AI analysis via **GPT-4o**
 """)
     st.markdown("<small style='color:#9E9E9E'>✍️ @okelaloli &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; Jun 2026</small>", unsafe_allow_html=True)
 
