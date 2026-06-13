@@ -286,7 +286,7 @@ if "results" in st.session_state:
     def _compact_bar(items):
         """Render a horizontal compact info bar like exchange tickers."""
         cells = "".join(
-            f"<td style='padding:6px 20px 6px 0;border-right:1px solid #444;padding-right:20px;margin-right:20px'>"
+            f"<td style='padding:6px 24px 6px 0'>"
             f"<div style='font-size:0.72rem;color:#9E9E9E'>{label}</div>"
             f"<div style='font-size:0.95rem;font-weight:600'>{val}</div></td>"
             for label, val in items
